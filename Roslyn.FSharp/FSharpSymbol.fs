@@ -5,18 +5,21 @@ open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpISymbol (symbolUse:FSharpSymbolUse) =
+type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
+    //let symbol = symbolUse.Symbol
+    //member x.Symbol = symbol
+
     interface ISymbol with
         member x.Kind = SymbolKind.Local
         member x.Language = "F#"
-        member x.Name = symbolUse.Symbol.DisplayName
-        member x.MetadataName = symbolUse.Symbol.FullName
+        member x.Name = symbol.DisplayName
+        member x.MetadataName = symbol.FullName
         member x.ContainingSymbol = null //TODO
         member x.ContainingAssembly = null //TODO
         member x.ContainingModule = null //TODO
         member x.ContainingType = null ////TODO for entities or functions this will be available
         member x.ContainingNamespace = null //TODO
-        member x.IsDefinition = symbolUse.IsFromDefinition
+        member x.IsDefinition = isFromDefinition
         member x.IsStatic = false //TODO
         member x.IsVirtual = false //TODO
         member x.IsOverride = false //TODO
@@ -34,9 +37,9 @@ type FSharpISymbol (symbolUse:FSharpSymbolUse) =
         member x.Accept<'a> (_visitor: SymbolVisitor<'a>) = Unchecked.defaultof<'a>
         member x.GetDocumentationCommentId () = "" //TODO
         member x.GetDocumentationCommentXml (_culture, _expand, _token) = "" //TODO
-        member x.ToDisplayString _format = symbolUse.Symbol.DisplayName //TODO format?
+        member x.ToDisplayString _format = symbol.DisplayName //TODO format?
         member x.ToDisplayParts _format = ImmutableArray.Empty //TODO
-        member x.ToMinimalDisplayString (_semanticModel, _position, _format) = symbolUse.Symbol.DisplayName //TODO format?
+        member x.ToMinimalDisplayString (_semanticModel, _position, _format) = symbol.DisplayName //TODO format?
         member x.ToMinimalDisplayParts (_semanticModel, _position, _format) = ImmutableArray.Empty //TODO
         member x.HasUnsupportedMetadata = false //TODO
         member x.Equals (other:ISymbol) = x.Equals(other)

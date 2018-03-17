@@ -55,7 +55,6 @@
     <Reference Include="FSharp.Compiler.Service">
       <HintPath>..\packages\FSharp.Compiler.Service.21.0.1\lib\net45\FSharp.Compiler.Service.dll</HintPath>
     </Reference>
-    <Reference Include="ISymWrapper, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="System.AppContext">
       <HintPath>..\packages\System.AppContext.4.3.0\lib\net463\System.AppContext.dll</HintPath>
     </Reference>
@@ -180,6 +179,7 @@
     <Compile Include="INamespaceOrTypeSymbol.fs" />
     <Compile Include="FSharpTypeSymbol.fs" />
     <Compile Include="FSharpNamedTypeSymbol.fs" />
+    <Compile Include="ICompilation.fs" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
 </Project>

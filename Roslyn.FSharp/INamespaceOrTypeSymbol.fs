@@ -3,8 +3,8 @@
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpNamespaceOrTypeSymbol (symbolUse:FSharpSymbolUse) =
-    inherit FSharpISymbol(symbolUse)
+type FSharpNamespaceOrTypeSymbol (symbolUse:FSharpSymbol) =
+    inherit FSharpISymbol(symbolUse, false, [])
     interface INamespaceOrTypeSymbol with
         member x.IsNamespace = notImplemented()
 

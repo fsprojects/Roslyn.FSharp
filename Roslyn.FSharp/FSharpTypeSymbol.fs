@@ -6,12 +6,9 @@ open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpTypeSymbol (symbolUse:FSharpSymbolUse) =
+type FSharpTypeSymbol (symbolUse:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(symbolUse)
     interface ITypeSymbol with
-        //
-        // Properties
-        //
         member x.AllInterfaces = notImplemented()
 
         member x.BaseType =notImplemented()
@@ -32,8 +29,5 @@ type FSharpTypeSymbol (symbolUse:FSharpSymbolUse) =
 
         member x.TypeKind =notImplemented()
 
-        //
-        // Methods
-        //
         member x.FindImplementationForInterfaceMember(interfaceMember) =
             notImplemented()

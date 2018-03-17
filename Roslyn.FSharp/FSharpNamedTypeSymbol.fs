@@ -7,8 +7,10 @@ open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpNamedTypeSymbol (symbolUse:FSharpSymbolUse) =
+/// Represents a type other than an array, a pointer, a type parameter, and dynamic.
+type FSharpNamedTypeSymbol (symbolUse:FSharpEntity) =
     inherit FSharpTypeSymbol(symbolUse)
+
     interface INamedTypeSymbol with
         member x.Arity  = notImplemented()
 
@@ -16,7 +18,7 @@ type FSharpNamedTypeSymbol (symbolUse:FSharpSymbolUse) =
 
         member x.ConstructedFrom  = notImplemented()
 
-        member x.Constructors  = notImplemented()
+        member x.Constructors  = [].ToImmutableArray()
 
         member x.DelegateInvokeMethod  = notImplemented()
 
