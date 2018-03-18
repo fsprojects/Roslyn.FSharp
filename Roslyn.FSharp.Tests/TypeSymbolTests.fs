@@ -5,7 +5,7 @@ open Microsoft.CodeAnalysis
 open NUnit.Framework
 
 [<AutoOpen>]
-module extenstions =
+module extensions =
     type INamedTypeSymbol with
     // mimic the C# extension method that I see used everywhere
     member this.GetBaseTypesAndThis() =
@@ -48,3 +48,24 @@ module ``Type symbol tests`` =
             |> List.map(fun t -> t.Name)
 
         Assert.AreEqual(["MyType"; "MyBaseType2"; "MyBaseType1"; "obj"], baseTypes)
+
+    [<Test>]
+    let ``can get properties``() =
+        let compilation = 
+            """
+            namespace MyNamespace
+            type MyType() =
+                member x.A = 1
+                member x.B = 2
+                member x.C = 3
+            """
+            |> getCompilation
+
+        let properties = 
+            compilation.GetTypeByMetadataName("MyNamespace.MyType").GetMembers().OfType<IPropertySymbol>()
+            |> Seq.map(fun t -> t.Name)
+            |> Seq.sort
+            |> List.ofSeq
+
+        printfn "%A" properties
+        Assert.AreEqual(["A"; "B"; "C"], properties)

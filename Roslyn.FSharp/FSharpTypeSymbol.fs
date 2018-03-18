@@ -21,9 +21,9 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
         member x.BaseType =
             match entity.BaseType with
             | Some baseType ->
-                match baseType.TypeDefinitionSafe() with
-                | Some typeDefinition -> namedTypeFromEntity typeDefinition
-                | None -> null
+                typeDefinitionSafe baseType
+                |> Option.map namedTypeFromEntity
+                |> Option.toObj
             | None -> null
 
         member x.Interfaces =
@@ -43,7 +43,7 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
         /// Currently we only care about definitions for entities, not uses
         member x.OriginalDefinition = x :> ITypeSymbol
 
-        member x.SpecialType = notImplemented()
+        member x.SpecialType = notImplemented() // int, string, void, enum, nullable etc
 
         member x.TypeKind =
             match entity with
@@ -60,8 +60,8 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
             notImplemented()
 
 /// Represents a type other than an array, a pointer, a type parameter, and dynamic.
-and FSharpNamedTypeSymbol (symbolUse:FSharpEntity) =
-    inherit FSharpTypeSymbol(symbolUse)
+and FSharpNamedTypeSymbol (entity: FSharpEntity) =
+    inherit FSharpTypeSymbol(entity)
 
     interface INamedTypeSymbol with
         member x.Arity  = notImplemented()
