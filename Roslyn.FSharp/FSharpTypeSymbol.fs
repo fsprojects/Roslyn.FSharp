@@ -1,6 +1,5 @@
 ﻿namespace Roslyn.FSharp
 
-open System
 open System.Collections.Immutable
 
 open Microsoft.CodeAnalysis
@@ -8,40 +7,54 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 
 type FSharpTypeSymbol (entity:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(entity)
+
+    let namedTypeFromEntity (entity:FSharpEntity) =
+        FSharpNamedTypeSymbol(entity) :> INamedTypeSymbol
+
     interface ITypeSymbol with
         member x.AllInterfaces =
             entity.AllInterfaces
-            |> Seq.choose (fun i -> i.TypeDefinitionSafe())
-            |> Seq.map (fun i -> FSharpNamedTypeSymbol(i) :> INamedTypeSymbol)
-            |> toImmutableArray
+            |> Seq.choose typeDefinitionSafe
+            |> Seq.map namedTypeFromEntity
+            |> Seq.toImmutableArray
 
         member x.BaseType =
             match entity.BaseType with
             | Some baseType ->
                 match baseType.TypeDefinitionSafe() with
-                | Some typeDefinition -> FSharpNamedTypeSymbol(typeDefinition) :> _
+                | Some typeDefinition -> namedTypeFromEntity typeDefinition
                 | None -> null
             | None -> null
 
         member x.Interfaces =
             entity.DeclaredInterfaces
-            |> Seq.choose (fun i -> i.TypeDefinitionSafe())
-            |> Seq.map (fun i -> FSharpNamedTypeSymbol(i) :> INamedTypeSymbol)
-            |> toImmutableArray
+            |> Seq.choose typeDefinitionSafe
+            |> Seq.map namedTypeFromEntity
+            |> Seq.toImmutableArray
 
-        member x.IsAnonymousType =notImplemented()
+        member x.IsAnonymousType = false
 
-        member x.IsReferenceType =notImplemented()
+        member x.IsReferenceType = not entity.IsValueType
 
-        member x.IsTupleType =notImplemented()
+        member x.IsTupleType = notImplemented()
 
-        member x.IsValueType =notImplemented()
+        member x.IsValueType = entity.IsValueType
 
-        member x.OriginalDefinition : ITypeSymbol = notImplemented()
+        /// Currently we only care about definitions for entities, not uses
+        member x.OriginalDefinition = x :> ITypeSymbol
 
-        member x.SpecialType =notImplemented()
+        member x.SpecialType = notImplemented()
 
-        member x.TypeKind =notImplemented()
+        member x.TypeKind =
+            match entity with
+            | _ when entity.IsArrayType -> TypeKind.Array
+            | _ when entity.IsClass -> TypeKind.Class
+            | _ when entity.IsDelegate -> TypeKind.Delegate
+            | _ when entity.IsEnum -> TypeKind.Enum
+            | _ when entity.IsInterface -> TypeKind.Interface
+            | _ when entity.IsFSharpModule -> TypeKind.Module // TODO: Is this the same meaning?
+            | _ when entity.IsValueType && not entity.IsEnum -> TypeKind.Struct
+            | _ -> TypeKind.Unknown
 
         member x.FindImplementationForInterfaceMember(interfaceMember) =
             notImplemented()
