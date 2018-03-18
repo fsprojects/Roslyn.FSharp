@@ -3,13 +3,13 @@
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpNamespaceOrTypeSymbol (symbolUse:FSharpSymbol) =
-    inherit FSharpISymbol(symbolUse, false, [])
+type FSharpNamespaceOrTypeSymbol (symbolUse:FSharpEntity) =
+    inherit FSharpISymbol(symbolUse, true, symbolUse.DeclarationLocation)
     interface INamespaceOrTypeSymbol with
-        member x.IsNamespace = notImplemented()
+        member x.IsNamespace = symbolUse.IsNamespace
 
-        member x.IsType = notImplemented()
-
+        member x.IsType = not symbolUse.IsNamespace && not symbolUse.IsArrayType
+            // && not TypeParameter - how?
         member x.GetMembers () = notImplemented()
 
         member x.GetMembers (name) = notImplemented()

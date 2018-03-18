@@ -6,12 +6,18 @@ open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpTypeSymbol (symbolUse:FSharpEntity) =
-    inherit FSharpNamespaceOrTypeSymbol(symbolUse)
+type FSharpTypeSymbol (entity:FSharpEntity) =
+    inherit FSharpNamespaceOrTypeSymbol(entity)
     interface ITypeSymbol with
         member x.AllInterfaces = notImplemented()
 
-        member x.BaseType =notImplemented()
+        member x.BaseType =
+            match entity.BaseType with
+            | Some baseType ->
+                match baseType.HasTypeDefinition with
+                | true -> FSharpNamedTypeSymbol(baseType.TypeDefinition) :> _
+                | false -> null
+            | None -> null
 
         member x.Interfaces =notImplemented()
 
@@ -31,3 +37,54 @@ type FSharpTypeSymbol (symbolUse:FSharpEntity) =
 
         member x.FindImplementationForInterfaceMember(interfaceMember) =
             notImplemented()
+
+/// Represents a type other than an array, a pointer, a type parameter, and dynamic.
+and FSharpNamedTypeSymbol (symbolUse:FSharpEntity) =
+    inherit FSharpTypeSymbol(symbolUse)
+
+    interface INamedTypeSymbol with
+        member x.Arity  = notImplemented()
+
+        member x.AssociatedSymbol  = notImplemented()
+
+        member x.ConstructedFrom  = notImplemented()
+
+        member x.Constructors  = [].ToImmutableArray()
+
+        member x.DelegateInvokeMethod  = notImplemented()
+
+        member x.EnumUnderlyingType  = notImplemented()
+
+        member x.InstanceConstructors  = notImplemented()
+
+        member x.IsComImport  = notImplemented()
+
+        member x.IsGenericType  = notImplemented()
+
+        member x.IsImplicitClass  = notImplemented()
+
+        member x.IsScriptClass  = notImplemented()
+
+        member x.IsUnboundGenericType  = notImplemented()
+
+        member x.MemberNames  = notImplemented()
+
+        member x.MightContainExtensionMethods  = notImplemented()
+
+        member x.OriginalDefinition : INamedTypeSymbol = notImplemented()
+
+        member x.StaticConstructors  = notImplemented()
+
+        member x.TupleElements  = notImplemented()
+
+        member x.TupleUnderlyingType  = notImplemented()
+
+        member x.TypeArguments  = notImplemented()
+
+        member x.TypeParameters  = notImplemented()
+
+        member x.Construct (typeArguments) = notImplemented()
+
+        member x.ConstructUnboundGenericType () = notImplemented()
+
+        member x.GetTypeArgumentCustomModifiers (ordinal) = notImplemented()

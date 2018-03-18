@@ -1,16 +1,18 @@
 ﻿<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\NUnit.3.10.1\build\NUnit.props" Condition="Exists('..\packages\NUnit.3.10.1\build\NUnit.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FB32FC21-8F4B-414D-9D0F-00C594B38181}</ProjectGuid>
+    <ProjectGuid>{C316440E-27B4-44BC-AF0A-1A05AD2771AC}</ProjectGuid>
     <UseStandardResourceNames>true</UseStandardResourceNames>
     <OutputType>Library</OutputType>
-    <RootNamespace>Roslyn.FSharp</RootNamespace>
-    <AssemblyName>Roslyn.FSharp</AssemblyName>
+    <RootNamespace>Roslyn.FSharp.Tests</RootNamespace>
+    <AssemblyName>Roslyn.FSharp.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>DEBUG</DefineConstants>
@@ -36,8 +38,21 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="FSharp.Compiler.Service">
+      <HintPath>..\packages\FSharp.Compiler.Service.21.0.1\lib\net45\FSharp.Compiler.Service.dll</HintPath>
+    </Reference>
     <Reference Include="FSharp.Core">
-      <HintPath>..\packages\FSharp.Core.4.1.18\lib\net45\FSharp.Core.dll</HintPath>
+      <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.DiaSymReader">
+      <HintPath>..\packages\Microsoft.DiaSymReader.1.1.0\lib\net20\Microsoft.DiaSymReader.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.DiaSymReader.PortablePdb">
+      <HintPath>..\packages\Microsoft.DiaSymReader.PortablePdb.1.2.0\lib\net45\Microsoft.DiaSymReader.PortablePdb.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\packages\System.Collections.Immutable.1.3.1\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
@@ -45,15 +60,8 @@
     <Reference Include="System.Reflection.Metadata">
       <HintPath>..\packages\System.Reflection.Metadata.1.4.2\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="Microsoft.DiaSymReader">
-      <HintPath>..\packages\Microsoft.DiaSymReader.1.1.0\lib\net20\Microsoft.DiaSymReader.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.DiaSymReader.PortablePdb">
-      <HintPath>..\packages\Microsoft.DiaSymReader.PortablePdb.1.2.0\lib\net45\Microsoft.DiaSymReader.PortablePdb.dll</HintPath>
-    </Reference>
-    <Reference Include="FSharp.Compiler.Service">
-      <HintPath>..\packages\FSharp.Compiler.Service.21.0.1\lib\net45\FSharp.Compiler.Service.dll</HintPath>
+    <Reference Include="System.ValueTuple">
+      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.AppContext">
       <HintPath>..\packages\System.AppContext.4.3.0\lib\net463\System.AppContext.dll</HintPath>
@@ -165,18 +173,19 @@
     <Reference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces">
       <HintPath>..\packages\Microsoft.CodeAnalysis.VisualBasic.Workspaces.2.7.0\lib\netstandard1.3\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll</HintPath>
     </Reference>
-    <Reference Include="System.ValueTuple">
-      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net47\System.ValueTuple.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="TestHelpers.fs" />
+    <Compile Include="CompilationTests.fs" />
+    <Compile Include="TypeSymbolTests.fs" />
     <None Include="packages.config" />
-    <Compile Include="Helpers.fs" />
-    <Compile Include="FSharpSymbol.fs" />
-    <Compile Include="INamespaceOrTypeSymbol.fs" />
-    <Compile Include="FSharpTypeSymbol.fs" />
-    <Compile Include="ICompilation.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Roslyn.FSharp\Roslyn.FSharp.fsproj">
+      <Project>{FB32FC21-8F4B-414D-9D0F-00C594B38181}</Project>
+      <Name>Roslyn.FSharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
 </Project>
