@@ -99,7 +99,7 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
             (x :> INamespaceOrTypeSymbol).GetMembers()
             |> Seq.map(fun m -> m.Name)
 
-        member x.MightContainExtensionMethods  = notImplemented()
+        member x.MightContainExtensionMethods = notImplemented()
 
         member x.OriginalDefinition = x :> INamedTypeSymbol
 

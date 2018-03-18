@@ -28,7 +28,17 @@ type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
         member x.Locations = ImmutableArray.Empty //TODO
         member x.DeclaringSyntaxReferences = ImmutableArray.Empty //TODO
         member x.GetAttributes () = ImmutableArray.Empty //TODO
-        member x.DeclaredAccessibility = Accessibility.NotApplicable //TODO
+        member x.DeclaredAccessibility =
+            let accessibility =
+                match symbol with
+                | :? FSharpEntity as e -> e.Accessibility
+                | :? FSharpMemberOrFunctionOrValue as m -> m.Accessibility
+                | _ -> invalidArg "symbol"  "Symbol was of a type not containing accessibility information"
+
+            if accessibility.IsPublic then Accessibility.Public
+            elif accessibility.IsInternal then Accessibility.Internal
+            else Accessibility.Private
+
         member x.OriginalDefinition = x :> ISymbol
         member x.Accept (_visitor:SymbolVisitor) = () //TODO
         member x.Accept<'a> (_visitor: SymbolVisitor<'a>) = Unchecked.defaultof<'a>
