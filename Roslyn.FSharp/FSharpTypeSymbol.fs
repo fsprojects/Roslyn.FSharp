@@ -209,23 +209,41 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
         entity.TryGetMembersFunctionsAndValues
         |> Seq.map memberToISymbol
 
+    let getTypeMembers() =
+        entity.NestedEntities
+        |> Seq.map (fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
+
     interface INamespaceOrTypeSymbol with
         member x.IsNamespace = entity.IsNamespace
 
         member x.IsType = not entity.IsNamespace && not entity.IsArrayType
             //TODO: && not TypeParameter - how?
-        member x.GetMembers () = getMembers() |> Seq.toImmutableArray
+        member x.GetMembers () =
+            getMembers()
+            |> Seq.toImmutableArray
 
         member x.GetMembers (name) =
             getMembers()
             |> Seq.filter(fun m -> m.Name = name)
             |> Seq.toImmutableArray
 
-        member x.GetTypeMembers () = notImplemented()
+        /// Get all the members of this symbol that are types
+        member x.GetTypeMembers () =
+            getTypeMembers()
+            |> Seq.toImmutableArray
 
-        member x.GetTypeMembers (name) = notImplemented()
+        /// Get all the members of this symbol that are types with the given name
+        member x.GetTypeMembers (name) =
+            getTypeMembers()
+            |> Seq.filter(fun m -> m.Name = name)
+            |> Seq.toImmutableArray
 
-        member x.GetTypeMembers (name, arity) = notImplemented()
+        /// Get all the members of this symbol that are types with the given name and arity
+        member x.GetTypeMembers (name, arity) =
+            getTypeMembers()
+            |> Seq.filter(fun m -> m.Name = name)
+            |> Seq.filter(fun m -> m.Arity = arity)
+            |> Seq.toImmutableArray
 
 and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
     inherit FSharpISymbol(property, true, property.DeclarationLocation)
