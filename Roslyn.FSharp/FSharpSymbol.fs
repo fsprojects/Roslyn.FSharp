@@ -6,9 +6,6 @@ open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
 type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
-    //let symbol = symbolUse.Symbol
-    //member x.Symbol = symbol
-
     interface ISymbol with
         member x.Kind = SymbolKind.Local
         member x.Language = "F#"

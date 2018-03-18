@@ -1,7 +1,19 @@
 ﻿namespace Roslyn.FSharp.Tests
 
 open Roslyn.FSharp
+open Microsoft.CodeAnalysis
 open NUnit.Framework
+
+[<AutoOpen>]
+module extenstions =
+    type INamedTypeSymbol with
+    // mimic the C# extension method that I see used everywhere
+    member this.GetBaseTypesAndThis() =
+        let rec getBaseTypesAndThis(current:INamedTypeSymbol) =
+            [ yield current
+              if not (isNull current.BaseType) then
+                  yield! getBaseTypesAndThis current.BaseType ]
+        getBaseTypesAndThis this
 
 module ``Type symbol tests`` =
     [<Test>]
@@ -31,5 +43,8 @@ module ``Type symbol tests`` =
             """
             |> getCompilation
 
-        let namedType = compilation.GetTypeByMetadataName("MyNamespace.MyType")
-        Assert.AreEqual("MyBaseType", namedType.BaseType.Name)
+        let baseTypes =
+            compilation.GetTypeByMetadataName("MyNamespace.MyType").GetBaseTypesAndThis()
+            |> List.map(fun t -> t.Name)
+
+        Assert.AreEqual(["MyType"; "MyBaseType2"; "MyBaseType1"; "obj"], baseTypes)
