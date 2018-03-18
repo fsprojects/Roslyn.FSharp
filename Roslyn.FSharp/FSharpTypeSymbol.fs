@@ -9,17 +9,25 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 type FSharpTypeSymbol (entity:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(entity)
     interface ITypeSymbol with
-        member x.AllInterfaces = notImplemented()
+        member x.AllInterfaces =
+            entity.AllInterfaces
+            |> Seq.choose (fun i -> i.TypeDefinitionSafe())
+            |> Seq.map (fun i -> FSharpNamedTypeSymbol(i) :> INamedTypeSymbol)
+            |> toImmutableArray
 
         member x.BaseType =
             match entity.BaseType with
             | Some baseType ->
-                match baseType.HasTypeDefinition with
-                | true -> FSharpNamedTypeSymbol(baseType.TypeDefinition) :> _
-                | false -> null
+                match baseType.TypeDefinitionSafe() with
+                | Some typeDefinition -> FSharpNamedTypeSymbol(typeDefinition) :> _
+                | None -> null
             | None -> null
 
-        member x.Interfaces =notImplemented()
+        member x.Interfaces =
+            entity.DeclaredInterfaces
+            |> Seq.choose (fun i -> i.TypeDefinitionSafe())
+            |> Seq.map (fun i -> FSharpNamedTypeSymbol(i) :> INamedTypeSymbol)
+            |> toImmutableArray
 
         member x.IsAnonymousType =notImplemented()
 
