@@ -28,12 +28,23 @@ type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
         member x.Locations = ImmutableArray.Empty //TODO
         member x.DeclaringSyntaxReferences = ImmutableArray.Empty //TODO
         member x.GetAttributes () = ImmutableArray.Empty //TODO
-        member x.DeclaredAccessibility = Accessibility.NotApplicable //TOdo
-        member x.OriginalDefinition = null //TODO
+        member x.DeclaredAccessibility = Accessibility.NotApplicable //TODO
+        member x.OriginalDefinition = x :> ISymbol
         member x.Accept (_visitor:SymbolVisitor) = () //TODO
         member x.Accept<'a> (_visitor: SymbolVisitor<'a>) = Unchecked.defaultof<'a>
-        member x.GetDocumentationCommentId () = "" //TODO
-        member x.GetDocumentationCommentXml (_culture, _expand, _token) = "" //TODO
+        member x.GetDocumentationCommentId () =
+            match symbol with
+            | :? FSharpEntity as e -> e.XmlDocSig
+            | :? FSharpMemberOrFunctionOrValue as m -> m.XmlDocSig
+            | _ -> invalidArg "symbol"  "Symbol was of a type not containing a documentation comment"
+        member x.GetDocumentationCommentXml (_culture, _expand, _token) =
+            let xmlDoc =
+                match symbol with
+                | :? FSharpEntity as e -> e.XmlDoc
+                | :? FSharpMemberOrFunctionOrValue as m -> m.XmlDoc
+                | _ -> invalidArg "symbol"  "Symbol was of a type not containing a documentation comment"
+            String.concat "\n" xmlDoc
+
         member x.ToDisplayString _format = symbol.DisplayName //TODO format?
         member x.ToDisplayParts _format = ImmutableArray.Empty //TODO
         member x.ToMinimalDisplayString (_semanticModel, _position, _format) = symbol.DisplayName //TODO format?
