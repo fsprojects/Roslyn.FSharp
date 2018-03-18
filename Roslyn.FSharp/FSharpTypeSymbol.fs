@@ -226,3 +226,51 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
         member x.GetTypeMembers (name) = notImplemented()
 
         member x.GetTypeMembers (name, arity) = notImplemented()
+
+and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
+    inherit FSharpISymbol(property, true, property.DeclarationLocation)
+
+    interface IPropertySymbol with
+        member x.ExplicitInterfaceImplementations = notImplemented()
+
+        member x.GetMethod =
+            if property.HasGetterMethod then
+                FSharpMethodSymbol(property.GetterMethod) :> _
+            else
+                null
+
+        member x.IsIndexer = notImplemented()
+
+        member x.IsReadOnly = not property.HasSetterMethod
+
+        member x.IsWithEvents = notImplemented()
+
+        member x.IsWriteOnly = not property.HasGetterMethod
+
+        member x.OriginalDefinition = x :> IPropertySymbol
+
+        member x.OverriddenProperty = notImplemented()
+
+        member x.Parameters = notImplemented()
+
+        member x.RefCustomModifiers = notImplemented()
+
+        member x.RefKind = notImplemented()
+
+        member x.ReturnsByRef = notImplemented()
+
+        member x.ReturnsByRefReadonly = notImplemented()
+
+        member x.SetMethod =
+            if property.HasSetterMethod then
+                FSharpMethodSymbol(property.SetterMethod) :> _
+            else
+                null
+
+        member x.Type =
+            property.ReturnParameter.Type
+            |> typeDefinitionSafe
+            |> Option.map(fun e -> FSharpTypeSymbol(e) :> ITypeSymbol)
+            |> Option.toObj
+
+        member x.TypeCustomModifiers = notImplemented()

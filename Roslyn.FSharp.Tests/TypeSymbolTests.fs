@@ -108,3 +108,22 @@ module ``Type symbol tests`` =
             compilation.GetTypeByMetadataName("MyNamespace.MyType").Constructors
 
         Assert.AreEqual(1, constructors.Length)
+
+    [<Test>]
+    let ``can get property type``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            type MyType() =
+                member x.A = 1
+                member x.B = 2
+                member x.C = 3
+                member x.Method() = 4
+            """
+            |> getCompilation
+
+        let property =
+            compilation.GetTypeByMetadataName("MyNamespace.MyType").GetMembers("A").OfType<IPropertySymbol>()
+            |> Seq.head
+
+        Assert.AreEqual("int", property.Type.Name)
