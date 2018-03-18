@@ -47,7 +47,7 @@ module ``Type symbol tests`` =
             compilation.GetTypeByMetadataName("MyNamespace.MyType").GetBaseTypesAndThis()
             |> List.map(fun t -> t.Name)
 
-        Assert.AreEqual(["MyType"; "MyBaseType2"; "MyBaseType1"; "obj"], baseTypes)
+        CollectionAssert.AreEqual(["MyType"; "MyBaseType2"; "MyBaseType1"; "obj"], baseTypes)
 
     [<Test>]
     let ``can get properties``() =
@@ -58,6 +58,7 @@ module ``Type symbol tests`` =
                 member x.A = 1
                 member x.B = 2
                 member x.C = 3
+                member x.Method() = 4
             """
             |> getCompilation
 
@@ -67,5 +68,43 @@ module ``Type symbol tests`` =
             |> Seq.sort
             |> List.ofSeq
 
-        printfn "%A" properties
-        Assert.AreEqual(["A"; "B"; "C"], properties)
+        CollectionAssert.AreEqual(["A"; "B"; "C"], properties)
+
+    [<Test>]
+    let ``can get methods``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            type MyType() =
+                member x.A = 1
+                member x.B = 2
+                member x.C = 3
+                member x.Method() = 4
+            """
+            |> getCompilation
+
+        let methods =
+            compilation.GetTypeByMetadataName("MyNamespace.MyType").GetMembers().OfType<IMethodSymbol>()
+            |> Seq.map(fun t -> t.Name)
+            |> Seq.sort
+            |> List.ofSeq
+
+        CollectionAssert.AreEqual(["( .ctor )"; "Method"], methods) //TODO: Does Roslyn return constructors here?
+
+    [<Test>]
+    let ``can get constructor``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            type MyType() =
+                member x.A = 1
+                member x.B = 2
+                member x.C = 3
+                member x.Method() = 4
+            """
+            |> getCompilation
+
+        let constructors =
+            compilation.GetTypeByMetadataName("MyNamespace.MyType").Constructors
+
+        Assert.AreEqual(1, constructors.Length)

@@ -175,7 +175,6 @@
     <Compile Include="Helpers.fs" />
     <Compile Include="FSharpSymbol.fs" />
     <Compile Include="FSharpPropertySymbol.fs" />
-    <Compile Include="INamespaceOrTypeSymbol.fs" />
     <Compile Include="FSharpTypeSymbol.fs" />
     <Compile Include="ICompilation.fs" />
   </ItemGroup>
