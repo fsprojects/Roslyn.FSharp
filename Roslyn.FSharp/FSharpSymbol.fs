@@ -13,10 +13,14 @@ type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) as this =
     abstract member ContainingNamespace : INamespaceSymbol
     default this.ContainingNamespace = notImplemented()
 
+    /// Override with CompiledName so that we get ".ctor" and "get_PropertyGetter" etc
+    abstract member Name : string
+    default this.Name = symbol.DisplayName
+
     interface ISymbol with
         member x.Kind = SymbolKind.Local
         member x.Language = "F#"
-        member x.Name = symbol.DisplayName
+        member x.Name = this.Name
         member x.MetadataName = this.MetadataName
         member x.ContainingSymbol = null //TODO
         member x.ContainingAssembly = null //TODO

@@ -96,11 +96,10 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
 
     let constructors() =
         (this :> INamespaceOrTypeSymbol).GetMembers().OfType<IMethodSymbol>()
-        |> Seq.filter(fun m -> m.Name = "( .ctor )")
+        |> Seq.filter(fun m -> m.Name = ".ctor")
 
     override this.MetadataName = entity.LogicalName
     override this.ContainingNamespace =
-        let z = entity
         // Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
         entity.Namespace
         |> Option.map (fun n -> FSharpLimitedNamespaceSymbol(n) :> INamespaceSymbol)
@@ -163,6 +162,8 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
 
 and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
     inherit FSharpISymbol(method, true, method.DeclarationLocation)
+
+    override x.Name = method.CompiledName
 
     interface IMethodSymbol with
         member x.Arity = notImplemented()
@@ -241,7 +242,7 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
     let memberToISymbol (m: FSharpMemberOrFunctionOrValue) : ISymbol =
         match m with
         | _ when m.IsProperty -> FSharpPropertySymbol(m) :> _
-        | _ when m.IsMember && not m.IsPropertyGetterMethod && not m.IsPropertySetterMethod -> FSharpMethodSymbol(m) :> _
+        | _ when m.IsMember -> FSharpMethodSymbol(m) :> _
         | _ -> FSharpISymbol(m, true, m.DeclarationLocation) :> _
 
     let getMembers() =

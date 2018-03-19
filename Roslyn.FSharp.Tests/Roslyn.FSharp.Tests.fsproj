@@ -180,6 +180,7 @@
     <Compile Include="CompilationTests.fs" />
     <Compile Include="TypeSymbolTests.fs" />
     <None Include="packages.config" />
+    <Compile Include="RoslynCSharpTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Roslyn.FSharp\Roslyn.FSharp.fsproj">

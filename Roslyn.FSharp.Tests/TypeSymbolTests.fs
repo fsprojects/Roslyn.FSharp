@@ -79,7 +79,7 @@ module ``Type symbol tests`` =
             |> Seq.sort
             |> List.ofSeq
 
-        CollectionAssert.AreEqual(["( .ctor )"; "Method"], methods) //TODO: Does Roslyn return constructors here?
+        CollectionAssert.AreEqual([".ctor"; "Method"; "get_A"; "get_B"; "get_C"], methods)
 
     [<Test>]
     let ``can get constructor``() =
