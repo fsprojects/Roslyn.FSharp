@@ -1,5 +1,6 @@
 ﻿namespace Roslyn.FSharp.Tests
 
+open System.Linq
 open Roslyn.FSharp
 open Microsoft.CodeAnalysis
 open NUnit.Framework
@@ -7,13 +8,17 @@ open NUnit.Framework
 [<AutoOpen>]
 module extensions =
     type INamedTypeSymbol with
-    // mimic the C# extension method that I see used everywhere
-    member this.GetBaseTypesAndThis() =
-        let rec getBaseTypesAndThis(current:INamedTypeSymbol) =
-            [ yield current
-              if not (isNull current.BaseType) then
-                  yield! getBaseTypesAndThis current.BaseType ]
-        getBaseTypesAndThis this
+        // mimic the C# extension method that I see used everywhere
+        member this.GetBaseTypesAndThis() =
+            let rec getBaseTypesAndThis(current:INamedTypeSymbol) =
+                [ yield current
+                  if not (isNull current.BaseType) then
+                      yield! getBaseTypesAndThis current.BaseType ]
+            getBaseTypesAndThis this
+
+    type INamespaceSymbol with
+        member x.GetFullName() =
+            x.ToDisplayString (SymbolDisplayFormat.CSharpErrorMessageFormat)
 
 module ``Type symbol tests`` =
     [<Test>]
@@ -144,3 +149,22 @@ module ``Type symbol tests`` =
             |> Seq.head
 
         Assert.AreEqual("MyType", nestedType.Name)
+
+    [<Test>]
+    let ``IDictionary metadata name is IDictionary`2``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            type MyType() =
+                member x.Dict = System.Collections.Generic.Dictionary<string, string>()
+            """
+            |> getCompilation
+
+        let dictionaryInterfaces =
+            compilation.GetTypeByMetadataName("MyNamespace.MyType").GetMembers("Dict").OfType<IPropertySymbol>().First().Type.AllInterfaces
+
+        let metadataNames = dictionaryInterfaces |> Seq.map(fun i -> i.MetadataName)
+        let interfaceNamespaces = dictionaryInterfaces |> Seq.map(fun i -> i.ContainingNamespace.GetFullName())
+
+        CollectionAssert.Contains(metadataNames, "IDictionary`2")
+        CollectionAssert.Contains(interfaceNamespaces, "System.Collections.Generic")

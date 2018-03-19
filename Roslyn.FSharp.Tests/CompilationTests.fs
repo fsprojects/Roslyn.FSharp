@@ -15,7 +15,7 @@ module ``Compilation tests`` =
 
         let namedType = compilation.GetTypeByMetadataName("MyNamespace.MyType")
         Assert.AreEqual("MyType", namedType.Name)
-        Assert.AreEqual("MyNamespace.MyType", namedType.MetadataName)
+        Assert.AreEqual("MyType", namedType.MetadataName)
 
 
 

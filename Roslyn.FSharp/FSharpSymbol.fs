@@ -5,17 +5,24 @@ open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
+type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) as this =
+    abstract member MetadataName : string
+    /// This should be overriden to provide LogicalName to include Generic information
+    default this.MetadataName = notImplemented()
+
+    abstract member ContainingNamespace : INamespaceSymbol
+    default this.ContainingNamespace = notImplemented()
+
     interface ISymbol with
         member x.Kind = SymbolKind.Local
         member x.Language = "F#"
         member x.Name = symbol.DisplayName
-        member x.MetadataName = symbol.FullName
+        member x.MetadataName = this.MetadataName
         member x.ContainingSymbol = null //TODO
         member x.ContainingAssembly = null //TODO
         member x.ContainingModule = null //TODO
         member x.ContainingType = null ////TODO for entities or functions this will be available
-        member x.ContainingNamespace = null //TODO
+        member x.ContainingNamespace = this.ContainingNamespace
         member x.IsDefinition = isFromDefinition
         member x.IsStatic = false //TODO
         member x.IsVirtual = false //TODO
