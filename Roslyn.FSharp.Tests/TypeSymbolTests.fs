@@ -5,21 +5,6 @@ open Roslyn.FSharp
 open Microsoft.CodeAnalysis
 open NUnit.Framework
 
-[<AutoOpen>]
-module extensions =
-    type INamedTypeSymbol with
-        // mimic the C# extension method that I see used everywhere
-        member this.GetBaseTypesAndThis() =
-            let rec getBaseTypesAndThis(current:INamedTypeSymbol) =
-                [ yield current
-                  if not (isNull current.BaseType) then
-                      yield! getBaseTypesAndThis current.BaseType ]
-            getBaseTypesAndThis this
-
-    type INamespaceSymbol with
-        member x.GetFullName() =
-            x.ToDisplayString (SymbolDisplayFormat.CSharpErrorMessageFormat)
-
 module ``Type symbol tests`` =
     [<Test>]
     let ``can get base type``() =
