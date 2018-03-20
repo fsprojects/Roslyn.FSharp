@@ -337,6 +337,8 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
 /// Limited namespace symbol - only useful for fetching the name
 /// If we could go from FSharpEntity (type) -> FSharpEntity (containing namespace) we wouldn't need this
 and FSharpLimitedNamespaceSymbol (namespaceName: string) =
+    inherit FSharpSymbolBase()
+    override x.Name = namespaceName
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
         member x.ContainingCompilation = notImplemented()
@@ -350,38 +352,42 @@ and FSharpLimitedNamespaceSymbol (namespaceName: string) =
         member x.GetTypeMembers (name:string) = notImplemented()
         member x.GetTypeMembers (name:string, arity:int) = notImplemented()
         member x.GetNamespaceMembers () = notImplemented()
-        member x.Kind = SymbolKind.Local
-        member x.Language = "F#"
-        member x.Name = namespaceName
-        member x.MetadataName = namespaceName
-        member x.ContainingSymbol = null
-        member x.ContainingAssembly = null
-        member x.ContainingModule = null
-        member x.ContainingType = null
-        member x.ContainingNamespace = null
-        member x.IsDefinition = true
-        member x.IsStatic = false
-        member x.IsVirtual = false
-        member x.IsOverride = false
-        member x.IsAbstract = false
-        member x.IsSealed = false
-        member x.IsExtern = false
-        member x.IsImplicitlyDeclared = false
-        member x.CanBeReferencedByName = true
-        member x.Locations = ImmutableArray.Empty
-        member x.DeclaringSyntaxReferences = ImmutableArray.Empty //TODO
-        member x.GetAttributes () = ImmutableArray.Empty //TODO
-        member x.DeclaredAccessibility = notImplemented()
-        member x.OriginalDefinition = notImplemented()
-        member x.Accept (_visitor:SymbolVisitor) = () //TODO
-        member x.Accept<'a> (_visitor: SymbolVisitor<'a>) = Unchecked.defaultof<'a>
-        member x.GetDocumentationCommentId () = notImplemented()
-        member x.GetDocumentationCommentXml (_culture, _expand, _token) = notImplemented()
-        member x.ToDisplayString _format = namespaceName
-        member x.ToDisplayParts _format = ImmutableArray.Empty //TODO
-        member x.ToMinimalDisplayString (_semanticModel, _position, _format) = namespaceName
-        member x.ToMinimalDisplayParts (_semanticModel, _position, _format) = ImmutableArray.Empty //TODO
-        member x.HasUnsupportedMetadata = false //TODO
-        member x.Equals (other:ISymbol) = x.Equals(other)
         member x.IsNamespace = true
         member x.IsType = false
+
+/// Symbol representing the global namespace.
+and FSharpGlobalNamespaceSymbol () =
+    inherit FSharpSymbolBase()
+    interface INamespaceSymbol with
+        member x.ConstituentNamespaces = notImplemented()
+        member x.ContainingCompilation = notImplemented()
+        member x.IsGlobalNamespace = true
+        member x.NamespaceKind = NamespaceKind.Assembly
+        member x.GetMembers () : INamespaceOrTypeSymbol seq = notImplemented()
+        member x.GetMembers () : ImmutableArray<ISymbol> = notImplemented()
+        member x.GetMembers (name:string) : INamespaceOrTypeSymbol seq = notImplemented()
+        member x.GetMembers (name:string) : ImmutableArray<ISymbol> = notImplemented()
+        member x.GetTypeMembers () = notImplemented()
+        member x.GetTypeMembers (name:string) = notImplemented()
+        member x.GetTypeMembers (name:string, arity:int) = notImplemented()
+        member x.GetNamespaceMembers () = notImplemented()
+        member x.IsNamespace = true
+        member x.IsType = false
+
+and FSharpAssemblySymbol (assembly: FSharpAssembly) =
+    inherit FSharpSymbolBase()
+    override x.Name = assembly.SimpleName 
+
+    interface IAssemblySymbol with
+        member x.GlobalNamespace = FSharpGlobalNamespaceSymbol() :> INamespaceSymbol
+        member x.Identity = notImplemented()
+        member x.IsInteractive = notImplemented()
+        member x.MightContainExtensionMethods = notImplemented()
+        member x.Modules = notImplemented()
+        member x.NamespaceNames = notImplemented()
+        member x.TypeNames = notImplemented()
+        member x.GetMetadata ()= notImplemented()
+        member x.GetTypeByMetadataName (fullyQualifiedMetadataName)= notImplemented()
+        member x.GivesAccessTo (toAssembly)= notImplemented()
+        member x.ResolveForwardedType (fullyQualifiedMetadataName)= notImplemented()
+        member x.Kind = SymbolKind.Assembly

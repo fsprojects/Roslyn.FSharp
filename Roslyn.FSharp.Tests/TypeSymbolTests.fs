@@ -153,3 +153,4 @@ module ``Type symbol tests`` =
 
         CollectionAssert.Contains(metadataNames, "IDictionary`2")
         CollectionAssert.Contains(interfaceNamespaces, "System.Collections.Generic")
+

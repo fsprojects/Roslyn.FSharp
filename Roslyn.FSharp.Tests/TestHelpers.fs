@@ -16,8 +16,8 @@ module TestHelpers =
             |> Async.RunSynchronously
 
         let checkResults = checker.ParseAndCheckProject(projOptions) |> Async.RunSynchronously
-        FSharpCompilation(checkResults) :> ICompilation
 
+        FSharpCompilation(checkResults) :> ICompilation
 
 [<AutoOpen>]
 module extensions =

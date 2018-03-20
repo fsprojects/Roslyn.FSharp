@@ -12,8 +12,7 @@ module ``C# playground`` =
         let compilation = 
             CSharpCompilation.Create("HelloWorld")
                 .AddReferences(
-                     MetadataReference.CreateFromFile(
-                         typeof<obj>.Assembly.Location))
+                     MetadataReference.CreateFromFile(typeof<obj>.Assembly.Location))
                 .AddSyntaxTrees(tree);
         compilation
 
@@ -39,3 +38,12 @@ module ``C# playground`` =
 
         CollectionAssert.AreEqual(["get_MyProperty"; "set_MyProperty"; ".ctor"], methodNames)
         CollectionAssert.AreEqual(["get_MyProperty"; "set_MyProperty"; ".ctor"], metadataNames)
+
+    [<Test>]
+    let ``Assembly symbols``() =
+        let compilation = getCompilation ""
+        let reference = compilation.References.First()
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(reference) :?> IAssemblySymbol
+        let z = asm.GlobalNamespace
+        Assert.AreEqual("mscorlib", asm.Name)

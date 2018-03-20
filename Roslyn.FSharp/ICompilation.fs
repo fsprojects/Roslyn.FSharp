@@ -3,6 +3,8 @@ open Microsoft.CodeAnalysis
 
 type ICompilation =
     abstract member GetTypeByMetadataName : fullyQualifiedMetadataName:string -> INamedTypeSymbol
+    abstract member References : MetadataReference seq
+    abstract member GetAssemblyOrModuleSymbol : MetadataReference -> ISymbol
 
 /// Microsoft.CodeAnalysis.Compilation constructor is internal,
 /// so we can't inherit from it. 
@@ -12,6 +14,8 @@ type CompilationWrapper(compilation: Compilation) =
     interface ICompilation with
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
             compilation.GetTypeByMetadataName(fullyQualifiedMetadataName)
+        member x.References = compilation.References
+        member x.GetAssemblyOrModuleSymbol(reference) = compilation.GetAssemblyOrModuleSymbol(reference)
 
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
@@ -20,7 +24,21 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
 
     interface ICompilation with
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
-            assemblySignature.Entities
+            assemblySignature.Entities // TODO: look at FindEntityByPath as it is probably faster
             |> Seq.tryFind(fun e -> e.FullName = fullyQualifiedMetadataName)
             |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
             |> Option.toObj
+
+        member x.References =
+            checkProjectResults.ProjectContext.GetReferencedAssemblies()
+            |> Seq.choose (fun asm -> asm.FileName)
+            |> Seq.map(fun fileName -> MetadataReference.CreateFromFile (fileName) :> MetadataReference)
+
+        member x.GetAssemblyOrModuleSymbol(reference) =
+            let fsharpAssembly =
+                checkProjectResults.ProjectContext.GetReferencedAssemblies()
+                |> List.find(fun a ->
+                    a.FileName
+                    |> Option.exists(fun f -> f = reference.Display))
+            //TODO: handle ModuleSymbol
+            FSharpAssemblySymbol(fsharpAssembly) :> ISymbol
