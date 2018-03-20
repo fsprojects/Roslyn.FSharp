@@ -66,7 +66,7 @@ type FSharpSymbolBase () as this =
         member x.HasUnsupportedMetadata = false //TODO
         member x.Equals (other:ISymbol) = x.Equals(other)
 
-type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) as this =
+type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
     inherit FSharpSymbolBase()
     //abstract member MetadataName : string
     ///// This should be overriden to provide LogicalName to include Generic information

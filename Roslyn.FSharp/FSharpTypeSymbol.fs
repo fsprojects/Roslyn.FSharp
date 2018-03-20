@@ -366,7 +366,7 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
             // but I don't know where to get the information needed to construct
             //AssemblyIdentity(name,version,cultureName,publicKey,hasPublicKey, isRetargetable,contentType)
         member x.IsInteractive = notImplemented()
-        member x.MightContainExtensionMethods = notImplemented()
+        member x.MightContainExtensionMethods = true //TODO: no idea
         member x.Modules = notImplemented()
         member x.NamespaceNames =
             assembly.Contents.Entities

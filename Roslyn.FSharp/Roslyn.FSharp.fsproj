@@ -176,6 +176,7 @@
     <Compile Include="FSharpSymbol.fs" />
     <Compile Include="FSharpTypeSymbol.fs" />
     <Compile Include="ICompilation.fs" />
+    <Compile Include="CompilationLoader.fs" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
 </Project>
