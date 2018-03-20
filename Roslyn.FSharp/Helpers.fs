@@ -1,5 +1,6 @@
 ﻿namespace Roslyn.FSharp
 open System
+open System.Collections.Generic
 open System.Collections.Immutable
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
@@ -19,3 +20,5 @@ module Seq =
     let toImmutableArray (sequence: 'a seq) =
         sequence.ToImmutableArray()
 
+    let toCollection (sequence: 'a seq) =
+        ResizeArray(sequence) :> ICollection<'a>

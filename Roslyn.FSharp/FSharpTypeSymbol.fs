@@ -365,7 +365,15 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         member x.IsInteractive = notImplemented()
         member x.MightContainExtensionMethods = notImplemented()
         member x.Modules = notImplemented()
-        member x.NamespaceNames = notImplemented()
+        member x.NamespaceNames =
+            assembly.Contents.Entities
+            |> Seq.choose(fun entity -> entity.Namespace)
+            |> Seq.distinct
+            |> Seq.collect(fun ns -> ns.Split('.'))
+            |> Seq.distinct
+            |> Seq.sort // Roslyn sorts these
+            |> Seq.toCollection
+
         member x.TypeNames = notImplemented()
         member x.GetMetadata ()= notImplemented()
         member x.GetTypeByMetadataName (fullyQualifiedMetadataName)= notImplemented()
