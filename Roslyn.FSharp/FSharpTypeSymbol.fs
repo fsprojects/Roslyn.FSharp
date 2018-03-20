@@ -19,12 +19,10 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
             |> Seq.toImmutableArray
 
         member x.BaseType =
-            match entity.BaseType with
-            | Some baseType ->
-                typeDefinitionSafe baseType
-                |> Option.map namedTypeFromEntity
-                |> Option.toObj
-            | None -> null
+            entity.BaseType
+            |> Option.bind typeDefinitionSafe
+            |> Option.map namedTypeFromEntity
+            |> Option.toObj
 
         member x.Interfaces =
             entity.DeclaredInterfaces
