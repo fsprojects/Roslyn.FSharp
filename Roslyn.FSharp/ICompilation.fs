@@ -24,8 +24,11 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
 
     interface ICompilation with
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
-            assemblySignature.Entities // TODO: look at FindEntityByPath as it is probably faster
-            |> Seq.tryFind(fun e -> e.FullName = fullyQualifiedMetadataName)
+            let path =
+                fullyQualifiedMetadataName.Split '.'
+                |> List.ofArray
+
+            assemblySignature.FindEntityByPath(path)
             |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
             |> Option.toObj
 

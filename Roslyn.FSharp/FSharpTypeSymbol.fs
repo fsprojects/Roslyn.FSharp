@@ -380,7 +380,15 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
             |> Seq.toCollection
 
         member x.GetMetadata ()= notImplemented()
-        member x.GetTypeByMetadataName (fullyQualifiedMetadataName)= notImplemented()
+        member x.GetTypeByMetadataName (fullyQualifiedMetadataName) =
+            let path =
+                fullyQualifiedMetadataName.Split '.'
+                |> List.ofArray
+
+            assembly.Contents.FindEntityByPath path
+            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
+            |> Option.toObj
+
         member x.GivesAccessTo (toAssembly)= notImplemented()
         member x.ResolveForwardedType (fullyQualifiedMetadataName)= notImplemented()
         member x.Kind = SymbolKind.Assembly
