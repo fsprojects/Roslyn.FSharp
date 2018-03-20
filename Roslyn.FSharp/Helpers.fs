@@ -21,4 +21,6 @@ module Seq =
         sequence.ToImmutableArray()
 
     let toCollection (sequence: 'a seq) =
-        ResizeArray(sequence) :> ICollection<'a>
+        match sequence with
+        | :? IList<'a> as list -> list :> ICollection<'a>
+        | _ -> ResizeArray(sequence) :> ICollection<'a>

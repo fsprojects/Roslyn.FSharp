@@ -374,7 +374,11 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
             |> Seq.sort // Roslyn sorts these
             |> Seq.toCollection
 
-        member x.TypeNames = notImplemented()
+        member x.TypeNames =
+            assembly.Contents.Entities
+            |> Seq.map(fun entity -> entity.CompiledName)
+            |> Seq.toCollection
+
         member x.GetMetadata ()= notImplemented()
         member x.GetTypeByMetadataName (fullyQualifiedMetadataName)= notImplemented()
         member x.GivesAccessTo (toAssembly)= notImplemented()

@@ -88,3 +88,16 @@ module ``Compilation tests`` =
              "X509Certificates"; "XamMac"; "Xml"]
 
         CollectionAssert.AreEqual(expected, namespaces)
+
+    [<Test>]
+    let ``Assembly TypeNames``() =
+        let compilation = getCompilation ""
+        let mscorlib = compilation.References.First()
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
+        let typeNames =
+            asm.TypeNames
+            |> List.ofSeq
+            |> List.sort
+
+        CollectionAssert.IsSubsetOf(["ASCIIEncoding"; "Action"; "File"; "Directory"], typeNames)
