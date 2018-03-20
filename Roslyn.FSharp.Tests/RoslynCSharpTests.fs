@@ -104,3 +104,11 @@ module ``C# playground`` =
             |> List.sort
 
         CollectionAssert.IsSubsetOf(["ASCIIEncoding"; "Action"; "File"; "Directory"], typeNames)
+
+    [<Test>]
+    let ``Assembly identity``() =
+        let compilation = getCompilation ""
+        let mscorlib = compilation.References.First()
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
+        Assert.AreEqual("mscorlib", asm.Identity.Name)

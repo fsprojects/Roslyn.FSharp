@@ -359,7 +359,12 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
 
     interface IAssemblySymbol with
         member x.GlobalNamespace = FSharpGlobalNamespaceSymbol(assembly) :> INamespaceSymbol
-        member x.Identity = notImplemented()
+        member x.Identity =
+            let asm = System.Reflection.Assembly.ReflectionOnlyLoad(assembly.SimpleName)
+            AssemblyIdentity.FromAssemblyDefinition asm
+            //TODO: Probably better to instantiate this directly,
+            // but I don't know where to get the information needed to construct
+            //AssemblyIdentity(name,version,cultureName,publicKey,hasPublicKey, isRetargetable,contentType)
         member x.IsInteractive = notImplemented()
         member x.MightContainExtensionMethods = notImplemented()
         member x.Modules = notImplemented()

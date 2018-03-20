@@ -28,7 +28,7 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
                 fullyQualifiedMetadataName.Split '.'
                 |> List.ofArray
 
-            assemblySignature.FindEntityByPath(path)
+            assemblySignature.FindEntityByPath path 
             |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
             |> Option.toObj
 
