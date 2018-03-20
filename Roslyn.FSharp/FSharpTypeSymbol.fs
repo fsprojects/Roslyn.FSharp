@@ -5,36 +5,7 @@ open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpNamespaceSymbol (entity:FSharpEntity) =
-    inherit FSharpNamespaceOrTypeSymbol(entity)
-
-    let getTypeMembers() =
-        entity.NestedEntities
-        |> Seq.map (fun e -> FSharpNamespaceOrTypeSymbol(e) :> INamespaceOrTypeSymbol)
-
-    interface INamespaceSymbol with
-        member x.ConstituentNamespaces = notImplemented()
-
-        member x.ContainingCompilation = notImplemented()
-
-        member x.IsGlobalNamespace = entity.FullName = "global"
-
-        member x.NamespaceKind = notImplemented()
-
-        member x.GetMembers () =
-            getTypeMembers()
-
-        member x.GetMembers (name) =
-            getTypeMembers()
-            |> Seq.filter(fun m -> m.Name = name)
-
-        /// Get all the members of this symbol that are namespaces 
-        member x.GetNamespaceMembers () =
-            entity.NestedEntities
-            |> Seq.filter(fun m -> m.IsNamespace)
-            |> Seq.map(fun n -> FSharpNamespaceSymbol(n) :> INamespaceSymbol)
-
-and FSharpTypeSymbol (entity:FSharpEntity) =
+type FSharpTypeSymbol (entity:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(entity)
 
     let namedTypeFromEntity (entity:FSharpEntity) =
@@ -401,3 +372,34 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         member x.GivesAccessTo (toAssembly)= notImplemented()
         member x.ResolveForwardedType (fullyQualifiedMetadataName)= notImplemented()
         member x.Kind = SymbolKind.Assembly
+
+//TODO: Namespaces are never entities in FCS
+// even though an entity has an IsNamespace property
+//type FSharpNamespaceSymbol (entity:FSharpEntity) =
+    //inherit FSharpNamespaceOrTypeSymbol(entity)
+
+    //let getTypeMembers() =
+    //    entity.NestedEntities
+    //    |> Seq.map (fun e -> FSharpNamespaceOrTypeSymbol(e) :> INamespaceOrTypeSymbol)
+
+    //interface INamespaceSymbol with
+        //member x.ConstituentNamespaces = notImplemented()
+
+        //member x.ContainingCompilation = notImplemented()
+
+        //member x.IsGlobalNamespace = entity.FullName = "global"
+
+        //member x.NamespaceKind = notImplemented()
+
+        //member x.GetMembers () =
+        //    getTypeMembers()
+
+        //member x.GetMembers (name) =
+        //    getTypeMembers()
+        //    |> Seq.filter(fun m -> m.Name = name)
+
+        ///// Get all the members of this symbol that are namespaces 
+        //member x.GetNamespaceMembers () =
+            //entity.NestedEntities
+            //|> Seq.filter(fun m -> m.IsNamespace)
+            //|> Seq.map(fun n -> FSharpNamespaceSymbol(n) :> INamespaceSymbol)
