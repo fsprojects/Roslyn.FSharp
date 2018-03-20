@@ -5,14 +5,12 @@ open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-
 type FSharpNamespaceSymbol (entity:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(entity)
 
     let getTypeMembers() =
         entity.NestedEntities
         |> Seq.map (fun e -> FSharpNamespaceOrTypeSymbol(e) :> INamespaceOrTypeSymbol)
-
 
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
@@ -356,11 +354,11 @@ and FSharpLimitedNamespaceSymbol (namespaceName: string) =
         member x.IsType = false
 
 /// Symbol representing the global namespace.
-and FSharpGlobalNamespaceSymbol () =
+and FSharpGlobalNamespaceSymbol (assembly:FSharpAssembly) =
     inherit FSharpSymbolBase()
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
-        member x.ContainingCompilation = notImplemented()
+        member x.ContainingCompilation = notImplemented() //TODO: We can't construct a Compilation
         member x.IsGlobalNamespace = true
         member x.NamespaceKind = NamespaceKind.Assembly
         member x.GetMembers () : INamespaceOrTypeSymbol seq = notImplemented()
@@ -370,7 +368,19 @@ and FSharpGlobalNamespaceSymbol () =
         member x.GetTypeMembers () = notImplemented()
         member x.GetTypeMembers (name:string) = notImplemented()
         member x.GetTypeMembers (name:string, arity:int) = notImplemented()
-        member x.GetNamespaceMembers () = notImplemented()
+        member x.GetNamespaceMembers () =
+            // TODO: this implementation is inefficient 
+            // but this snippet returns empty
+            //
+            // assembly.Contents.Entities
+            // |> Seq.filter (fun entity -> entity.IsNamespace)
+            assembly.Contents.Entities
+            |> Seq.choose(fun entity -> entity.Namespace)
+            |> Seq.distinct
+            |> Seq.map(fun ns -> ns.Split('.').[0])
+            |> Seq.distinct
+            |> Seq.sort // Roslyn sorts these
+            |> Seq.map (fun ns -> FSharpLimitedNamespaceSymbol(ns) :> INamespaceSymbol)
         member x.IsNamespace = true
         member x.IsType = false
 
@@ -379,7 +389,7 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
     override x.Name = assembly.SimpleName 
 
     interface IAssemblySymbol with
-        member x.GlobalNamespace = FSharpGlobalNamespaceSymbol() :> INamespaceSymbol
+        member x.GlobalNamespace = FSharpGlobalNamespaceSymbol(assembly) :> INamespaceSymbol
         member x.Identity = notImplemented()
         member x.IsInteractive = notImplemented()
         member x.MightContainExtensionMethods = notImplemented()

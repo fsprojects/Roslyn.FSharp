@@ -45,5 +45,20 @@ module ``C# playground`` =
         let reference = compilation.References.First()
 
         let asm = compilation.GetAssemblyOrModuleSymbol(reference) :?> IAssemblySymbol
-        let z = asm.GlobalNamespace
         Assert.AreEqual("mscorlib", asm.Name)
+
+    [<Test>]
+    let ``Global namespace GetNamespaceMembers``() =
+        let compilation = getCompilation ""
+        let reference = compilation.References.First()
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(reference) :?> IAssemblySymbol
+        let namespaces =
+            asm.GlobalNamespace.GetNamespaceMembers()
+
+        let namespaces =
+            namespaces
+            |> Seq.map(fun n -> n.Name)
+            |> List.ofSeq
+
+        CollectionAssert.AreEqual(["Internal"; "Microsoft"; "Mono"; "System"; "XamMac"], namespaces)

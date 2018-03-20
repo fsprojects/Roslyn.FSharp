@@ -41,5 +41,20 @@ module ``Compilation tests`` =
         let assembly = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
         Assert.AreEqual(assembly.GlobalNamespace.IsGlobalNamespace, true)
 
+    [<Test>]
+    let ``Global namespace GetNamespaceMembers``() =
+        let compilation = getCompilation ""
+        let mscorlib =
+            compilation.References |> Seq.find(fun r -> r.Display.EndsWith "mscorlib.dll")
 
+        let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
+        let namespaces =
+            asm.GlobalNamespace.GetNamespaceMembers()
+
+        let namespaces =
+            namespaces
+            |> Seq.map(fun n -> n.Name)
+            |> List.ofSeq
+
+        CollectionAssert.AreEqual(["Internal"; "Microsoft"; "Mono"; "System"; "XamMac"], namespaces)
 
