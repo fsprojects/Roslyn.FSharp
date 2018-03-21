@@ -320,7 +320,7 @@ and FSharpLimitedNamespaceSymbol (namespaceName: string) =
         member x.GetTypeMembers () = notImplemented()
         member x.GetTypeMembers (name:string) = notImplemented()
         member x.GetTypeMembers (name:string, arity:int) = notImplemented()
-        member x.GetNamespaceMembers () = notImplemented()
+        member x.GetNamespaceMembers () = Seq.empty
         member x.IsNamespace = true
         member x.IsType = false
 
