@@ -11,6 +11,11 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
     let namedTypeFromEntity (entity:FSharpEntity) =
         FSharpNamedTypeSymbol(entity) :> INamedTypeSymbol
 
+    override this.GetAttributes () =
+        entity.Attributes
+        |> Seq.map(fun a -> FSharpAttributeData(a.AttributeType) :> AttributeData)
+        |> Seq.toImmutableArray
+
     interface ITypeSymbol with
         member x.AllInterfaces =
             entity.AllInterfaces
@@ -397,6 +402,16 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         member x.GivesAccessTo (toAssembly)= notImplemented()
         member x.ResolveForwardedType (fullyQualifiedMetadataName)= notImplemented()
         member x.Kind = SymbolKind.Assembly
+
+and FSharpAttributeData(entity: FSharpEntity) =
+    inherit AttributeData()
+
+    override x.CommonAttributeClass =
+        FSharpNamedTypeSymbol(entity) :> INamedTypeSymbol
+    override x.CommonConstructorArguments = notImplemented()
+    override x.CommonAttributeConstructor = notImplemented()
+    override x.CommonApplicationSyntaxReference = notImplemented()
+    override x.CommonNamedArguments = notImplemented()
 
 //TODO: Namespaces are never entities in FCS
 // even though an entity has an IsNamespace property

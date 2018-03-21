@@ -29,6 +29,9 @@ type FSharpSymbolBase () as this =
     abstract member ToMinimalDisplayString : SemanticModel * int * SymbolDisplayFormat -> string
     default this.ToMinimalDisplayString(_semanticModel, _position, _format) = this.Name
 
+    abstract member GetAttributes : unit -> ImmutableArray<AttributeData>
+    default this.GetAttributes() = ImmutableArray.Empty
+
     interface ISymbol with
         member x.Kind = SymbolKind.Local
         member x.Language = "F#"
@@ -50,7 +53,7 @@ type FSharpSymbolBase () as this =
         member x.CanBeReferencedByName = true //TODO
         member x.Locations = ImmutableArray.Empty //TODO
         member x.DeclaringSyntaxReferences = ImmutableArray.Empty //TODO
-        member x.GetAttributes () = ImmutableArray.Empty //TODO
+        member x.GetAttributes () = this.GetAttributes()
         member x.DeclaredAccessibility = this.DeclaredAccessibility
         member x.OriginalDefinition = x :> ISymbol
         member x.Accept (_visitor:SymbolVisitor) = () //TODO
@@ -105,6 +108,9 @@ type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
             | :? FSharpMemberOrFunctionOrValue as m -> m.XmlDoc
             | _ -> invalidArg "symbol"  "Symbol was of a type not containing a documentation comment"
         String.concat "\n" xmlDoc
+
+    
+
     //interface ISymbol with
         //member x.Kind = SymbolKind.Local
         //member x.Language = "F#"
