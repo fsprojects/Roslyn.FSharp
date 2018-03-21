@@ -5,6 +5,7 @@ type ICompilation =
     abstract member GetTypeByMetadataName : fullyQualifiedMetadataName:string -> INamedTypeSymbol
     abstract member References : MetadataReference seq
     abstract member GetAssemblyOrModuleSymbol : MetadataReference -> ISymbol
+    abstract member Assembly : IAssemblySymbol
 
 /// Microsoft.CodeAnalysis.Compilation constructor is internal,
 /// so we can't inherit from it. 
@@ -16,6 +17,7 @@ type CompilationWrapper(compilation: Compilation) =
             compilation.GetTypeByMetadataName(fullyQualifiedMetadataName)
         member x.References = compilation.References
         member x.GetAssemblyOrModuleSymbol(reference) = compilation.GetAssemblyOrModuleSymbol(reference)
+        member x.Assembly = compilation.Assembly
 
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
@@ -45,3 +47,12 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
                     |> Option.exists(fun f -> f = reference.Display))
             //TODO: handle ModuleSymbol
             FSharpAssemblySymbol(fsharpAssembly) :> ISymbol
+
+        member x.Assembly =
+            //TODO: Is there a better way to get the current FSharpAssembly?
+            assemblySignature.Entities
+            |> Seq.tryHead
+            |> function
+               | Some e -> FSharpAssemblySymbol(e.Assembly) :> _
+               | None -> failwith "Couldn't find any entities"
+

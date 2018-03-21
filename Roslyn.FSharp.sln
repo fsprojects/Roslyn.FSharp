@@ -5,6 +5,11 @@ Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Roslyn.FSharp", "Roslyn.FSh
 EndProject
 Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Roslyn.FSharp.Tests", "Roslyn.FSharp.Tests\Roslyn.FSharp.Tests.fsproj", "{C316440E-27B4-44BC-AF0A-1A05AD2771AC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NuGet.Config", "NuGet.Config", "{9F248073-C0A5-4E58-B529-3B22DF739984}"
+	ProjectSection(SolutionItems) = preProject
+		NuGet.config = NuGet.config
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

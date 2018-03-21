@@ -96,6 +96,8 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
 
         member x.IsImplicitClass = notImplemented()
 
+        member x.IsSerializable = false
+
         member x.IsScriptClass = entity.DeclarationLocation.FileName.EndsWith(".fsx")
 
         member x.IsUnboundGenericType  = notImplemented()
