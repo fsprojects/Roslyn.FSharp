@@ -364,6 +364,12 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
     inherit FSharpSymbolBase()
     override x.Name = assembly.SimpleName 
 
+    override this.GetAttributes () =
+        assembly.Contents.Entities
+        |> Seq.filter(fun e -> e.IsAttributeType)
+        |> Seq.map(fun e -> FSharpAttributeData(e) :> AttributeData)
+        |> Seq.toImmutableArray
+
     interface IAssemblySymbol with
         member x.GlobalNamespace = FSharpGlobalNamespaceSymbol(assembly) :> INamespaceSymbol
         member x.Identity =

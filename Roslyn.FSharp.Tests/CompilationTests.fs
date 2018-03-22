@@ -109,3 +109,33 @@ module ``Compilation tests`` =
 
         let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
         Assert.AreEqual("mscorlib", asm.Identity.Name)
+
+    [<Test;Ignore("Broke")>]
+    let ``Assembly attributes``() =
+        let compilation = getCompilation ""
+        let mscorlib = compilation.References.First()
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
+        let attrs =
+            asm.GetAttributes()
+            |> Seq.map(fun a -> a.AttributeClass.Name)
+            |> Seq.sort
+            |> List.ofSeq
+
+        printfn "%A" attrs
+        let expected =
+            ["AllowPartiallyTrustedCallersAttribute"; "AssemblyCompanyAttribute";
+             "AssemblyCopyrightAttribute"; "AssemblyDefaultAliasAttribute";
+             "AssemblyDelaySignAttribute"; "AssemblyDescriptionAttribute";
+             "AssemblyFileVersionAttribute"; "AssemblyInformationalVersionAttribute";
+             "AssemblyKeyFileAttribute"; "AssemblyProductAttribute";
+             "AssemblyTitleAttribute"; "CLSCompliantAttribute";
+             "ComCompatibleVersionAttribute"; "ComVisibleAttribute";
+             "CompilationRelaxationsAttribute"; "DebuggableAttribute";
+             "DefaultDependencyAttribute"; "GuidAttribute"; "InternalsVisibleToAttribute";
+             "InternalsVisibleToAttribute"; "InternalsVisibleToAttribute";
+             "InternalsVisibleToAttribute"; "InternalsVisibleToAttribute";
+             "NeutralResourcesLanguageAttribute"; "RuntimeCompatibilityAttribute";
+             "SatelliteContractVersionAttribute"; "StringFreezingAttribute"]
+        //TODO: FCS returns many more than Roslyn
+        CollectionAssert.IsSubsetOf(expected, attrs)
