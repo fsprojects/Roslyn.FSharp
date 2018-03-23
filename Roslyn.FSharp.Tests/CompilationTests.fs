@@ -5,6 +5,7 @@ open Microsoft.CodeAnalysis
 open Roslyn.FSharp
 open NUnit.Framework
 
+open Microsoft.FSharp.Compiler.SourceCodeServices
 module ``Compilation tests`` =
     [<Test>]
     let ``can get type by metadata name``() =
@@ -110,7 +111,7 @@ module ``Compilation tests`` =
         let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
         Assert.AreEqual("mscorlib", asm.Identity.Name)
 
-    [<Test;Ignore("Broke")>]
+    [<Test>]
     let ``Assembly attributes``() =
         let compilation = getCompilation ""
         let mscorlib = compilation.References.First()
@@ -137,5 +138,5 @@ module ``Compilation tests`` =
              "InternalsVisibleToAttribute"; "InternalsVisibleToAttribute";
              "NeutralResourcesLanguageAttribute"; "RuntimeCompatibilityAttribute";
              "SatelliteContractVersionAttribute"; "StringFreezingAttribute"]
-        //TODO: FCS returns many more than Roslyn
-        CollectionAssert.IsSubsetOf(expected, attrs)
+
+        CollectionAssert.Equals(expected, attrs)

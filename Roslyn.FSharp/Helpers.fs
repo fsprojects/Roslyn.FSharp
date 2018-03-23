@@ -17,10 +17,11 @@ module helpers = //TODO: I suck at naming
     let typeDefinitionSafe (typ: FSharpType) = typ.TypeDefinitionSafe()
 
 module Seq =
-    let toImmutableArray (sequence: 'a seq) =
+    let inline toImmutableArray (sequence: 'a seq) =
         sequence.ToImmutableArray()
 
     let toCollection (sequence: 'a seq) =
         match sequence with
         | :? IList<'a> as list -> list :> ICollection<'a>
         | _ -> ResizeArray(sequence) :> ICollection<'a>
+

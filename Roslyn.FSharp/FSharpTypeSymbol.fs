@@ -1,6 +1,7 @@
 ﻿namespace Roslyn.FSharp
 
 open System.Collections.Immutable
+open System.Collections.Generic
 
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
@@ -13,7 +14,7 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
 
     override this.GetAttributes () =
         entity.Attributes
-        |> Seq.map(fun a -> FSharpAttributeData(a.AttributeType) :> AttributeData)
+        |> Seq.map(fun a -> FSharpAttributeData(a) :> AttributeData)
         |> Seq.toImmutableArray
 
     interface ITypeSymbol with
@@ -365,9 +366,8 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
     override x.Name = assembly.SimpleName 
 
     override this.GetAttributes () =
-        assembly.Contents.Entities
-        |> Seq.filter(fun e -> e.IsAttributeType)
-        |> Seq.map(fun e -> FSharpAttributeData(e) :> AttributeData)
+        assembly.Contents.Attributes
+        |> Seq.map(fun attr -> FSharpAttributeData(attr) :> AttributeData)
         |> Seq.toImmutableArray
 
     interface IAssemblySymbol with
@@ -409,15 +409,68 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         member x.ResolveForwardedType (fullyQualifiedMetadataName)= notImplemented()
         member x.Kind = SymbolKind.Assembly
 
-and FSharpAttributeData(entity: FSharpEntity) =
+/// Hopefully temporary type because Microsoft.CodeAnalysis.TypedConstant
+/// has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
+and TypedConstant(entity: ITypeSymbol, kind:TypedConstantKind, value:obj) =
+    member x.Type = entity
+    member x.Kind = kind
+    member x.Value = value
+    member x.Values = notImplemented()
+        //if x.Kind = TypedConstantKind.Array then
+        //    let sequence = x.Value :?> seq<TypedConstant>
+        //    sequence |> Seq.toImmutableArray
+        //else
+            //ImmutableArray.Empty
+
+
+and FSharpAttributeData(attribute: FSharpAttribute) =
     inherit AttributeData()
 
+    let getTypeKind(entity:FSharpEntity) =
+        match entity.FullName with
+        | "System.Boolean"
+        | "System.SByte"
+        | "System.Int16"
+        | "System.Int32"
+        | "System.Int64"
+        | "System.Byte"
+        | "System.UInt16"
+        | "System.UInt32"
+        | "System.UInt64"
+        | "System.Single"
+        | "System.Double"
+        | "System.Char"
+        | "System.String"
+        | "System.Object" ->
+            TypedConstantKind.Primitive
+        | _ ->
+            match entity with
+            | _ when entity.IsArrayType -> TypedConstantKind.Array
+            | _ when entity.IsEnum -> TypedConstantKind.Enum
+            | _ when entity.IsFSharpModule || entity.IsClass -> TypedConstantKind.Type //TODO: no idea
+            | _ -> TypedConstantKind.Error
+
     override x.CommonAttributeClass =
-        FSharpNamedTypeSymbol(entity) :> INamedTypeSymbol
+        FSharpNamedTypeSymbol(attribute.AttributeType) :> INamedTypeSymbol
     override x.CommonConstructorArguments = notImplemented()
     override x.CommonAttributeConstructor = notImplemented()
+        //attribute.
     override x.CommonApplicationSyntaxReference = notImplemented()
-    override x.CommonNamedArguments = notImplemented()
+    override x.CommonNamedArguments =
+        notImplemented()
+
+    /// substitute method for CommonNamedArguments that uses our TypedConstant type
+    member x.NamedArguments =
+        let args =
+            attribute.NamedArguments
+            |> Seq.choose (fun (ty, nm, isField, obj) ->
+                ty.TypeDefinitionSafe()
+                |> Option.bind(fun entity ->
+                    let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
+                    let typeKind = getTypeKind entity
+                    let constant = new TypedConstant(typeSymbol, typeKind, obj)
+                    KeyValuePair(nm, constant) |> Some))
+        args.ToImmutableArray()
 
 //TODO: Namespaces are never entities in FCS
 // even though an entity has an IsNamespace property
@@ -449,3 +502,4 @@ and FSharpAttributeData(entity: FSharpEntity) =
             //entity.NestedEntities
             //|> Seq.filter(fun m -> m.IsNamespace)
             //|> Seq.map(fun n -> FSharpNamespaceSymbol(n) :> INamespaceSymbol)
+

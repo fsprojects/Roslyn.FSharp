@@ -1,5 +1,5 @@
 ﻿namespace Roslyn.FSharp.Tests
-
+open System
 open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -141,3 +141,34 @@ module ``C# playground`` =
              "NeutralResourcesLanguageAttribute"; "RuntimeCompatibilityAttribute";
              "SatelliteContractVersionAttribute"; "StringFreezingAttribute"]
         CollectionAssert.AreEqual(expected, attrs)
+
+    [<Test>]
+    let ``Attribute named arguments``() =
+        let compilation =
+            """
+            open System;
+            public class XmlnsDefinitionAttribute : Attribute
+            {
+                public XmlnsDefinitionAttribute(
+                    string xmlNamespace,
+                    string clrNamespace
+                )
+            }
+
+            [XmlnsDefinition("xmlns", "MyNamespace")]
+            public class MyDefinition
+            {
+            }
+            """
+            |> getCompilation
+
+        let t = compilation.GetTypeByMetadataName("MyDefinition") 
+        let attr = t.GetAttributes()
+
+        let namedArguments = attr.First().NamedArguments
+
+        let expectedKeys = ["xmlNamespace"; "clrNamespace"]
+        let expectedValues = ["xmlns"; "NyNamespace"]
+
+        CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Key))
+        CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Value))
