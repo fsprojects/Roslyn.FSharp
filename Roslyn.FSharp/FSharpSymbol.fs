@@ -109,7 +109,6 @@ type FSharpISymbol (symbol:FSharpSymbol, isFromDefinition, location) =
             | _ -> invalidArg "symbol"  "Symbol was of a type not containing a documentation comment"
         String.concat "\n" xmlDoc
 
-    
 
     //interface ISymbol with
         //member x.Kind = SymbolKind.Local

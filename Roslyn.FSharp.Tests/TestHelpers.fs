@@ -2,22 +2,16 @@
 
 open System.IO
 open Microsoft.CodeAnalysis
-open Microsoft.FSharp.Compiler.SourceCodeServices
 open Roslyn.FSharp
 
 [<AutoOpen>]
 module TestHelpers =
     let getCompilation input =
-        let checker = FSharpChecker.Create() 
         let filename = "test.fsx"
         File.WriteAllText(filename, input)
-        let projOptions, _errors = 
-            checker.GetProjectOptionsFromScript(filename, input)
-            |> Async.RunSynchronously
-
-        let checkResults = checker.ParseAndCheckProject(projOptions) |> Async.RunSynchronously
-
-        FSharpCompilation(checkResults) :> ICompilation
+        CompilationLoader.Load("test.fsproj", [filename], [])
+        |> Async.AwaitTask
+        |> Async.RunSynchronously
 
 [<AutoOpen>]
 module extensions =

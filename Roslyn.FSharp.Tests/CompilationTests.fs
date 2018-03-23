@@ -139,4 +139,4 @@ module ``Compilation tests`` =
              "NeutralResourcesLanguageAttribute"; "RuntimeCompatibilityAttribute";
              "SatelliteContractVersionAttribute"; "StringFreezingAttribute"]
 
-        CollectionAssert.Equals(expected, attrs)
+        CollectionAssert.IsSubsetOf(expected, attrs)

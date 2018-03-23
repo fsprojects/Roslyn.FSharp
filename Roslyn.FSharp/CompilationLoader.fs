@@ -2,8 +2,6 @@
 
 module CompilationLoader =
     open System
-    open System.Collections.Immutable
-    open Microsoft.CodeAnalysis
     open Microsoft.FSharp.Compiler.SourceCodeServices
 
     let private checker = FSharpChecker.Create()
@@ -39,5 +37,5 @@ module CompilationLoader =
                   Stamp = None }
 
             let! checkResults = checker.ParseAndCheckProject(projectOptions)
-            return FSharpCompilation(checkResults)
+            return FSharpCompilation(checkResults) :> ICompilation
         } |> Async.StartAsTask

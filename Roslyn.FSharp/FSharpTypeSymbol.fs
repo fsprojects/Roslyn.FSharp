@@ -468,7 +468,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
                 |> Option.bind(fun entity ->
                     let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
                     let typeKind = getTypeKind entity
-                    let constant = new TypedConstant(typeSymbol, typeKind, obj)
+                    let constant = TypedConstant(typeSymbol, typeKind, obj)
                     KeyValuePair(nm, constant) |> Some))
         args.ToImmutableArray()
 
