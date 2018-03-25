@@ -148,7 +148,7 @@ module ``Compilation tests`` =
             namespace MyNamespace
             open System
             type XmlnsDefinitionAttribute(xmlNamespace, clrNamespace) =
-                inherit Attribute
+                inherit Attribute()
 
             [<XmlnsDefinition("xmlns", "MyNamespace")>]
             type MyDefinition() = class end
@@ -162,3 +162,32 @@ module ``Compilation tests`` =
         let args = compilation.GetAttributeConstructorArguments(attr)
         Assert.AreEqual("xmlns", args.[0].Value)
         Assert.AreEqual("MyNamespace", args.[1].Value)
+
+    [<Test>]
+    let ``Attribute named arguments``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            open System
+
+            type XmlnsDefinitionAttribute() =
+                inherit Attribute()
+
+                member val XmlNamespace = "" with get, set
+                member val ClrNamespace = "" with get, set
+
+            [<XmlnsDefinition(XmlNamespace="xmlns", ClrNamespace="MyNamespace")>]
+            type MyDefinition() = class end
+            """
+            |> getCompilation
+
+        let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
+        let attrs = t.GetAttributes()
+
+        let attr = attrs.First();
+        let namedArguments = compilation.GetAttributeNamedArguments attr
+        let expectedKeys = ["XmlNamespace"; "ClrNamespace"]
+        let expectedValues = ["xmlns"; "MyNamespace"]
+
+        CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Key))
+        CollectionAssert.AreEqual(expectedValues, namedArguments.Select(fun kv -> kv.Value.Value))
