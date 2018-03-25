@@ -4,6 +4,7 @@ open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open NUnit.Framework
+open Roslyn.FSharp
 
 /// These aren't really tests. They're just experiments for seeing how Roslyn handles C# so that I can compare with F#
 module ``C# playground`` =
@@ -18,7 +19,8 @@ module ``C# playground`` =
 
     let getICompilation(source:string) =
         let compilation = getCompilation source
-        CompilationWrapper(compilation)
+        CompilationWrapper(compilation) :> ICompilation
+
     [<Test>]
     let ``property get methods``() =
         let compilation = 
@@ -164,17 +166,15 @@ module ``C# playground`` =
             {
             }
             """
-            |> getCompilation
+            |> getICompilation
 
         let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
         let attrs = t.GetAttributes()
 
         let attr = attrs.First();
-
-        let first = attr.ConstructorArguments |> Seq.head
-        let second = attr.ConstructorArguments |> Seq.last
-        Assert.AreEqual("xmlns", first.Value)
-        Assert.AreEqual("MyNamespace", second.Value)
+        let args = compilation.GetAttributeConstructorArguments attr
+        Assert.AreEqual("xmlns", args.[0].Value)
+        Assert.AreEqual("MyNamespace", args.[1].Value)
         //namedArguments |> Seq.first
         //let expectedKeys = ["xmlNamespace"; "clrNamespace"]
         //let expectedValues = ["xmlns"; "NyNamespace"]

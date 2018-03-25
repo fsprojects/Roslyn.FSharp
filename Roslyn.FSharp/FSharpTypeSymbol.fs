@@ -414,6 +414,8 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
 and TypedConstant(entity: ITypeSymbol, kind:TypedConstantKind, value:obj) =
     member x.Type = entity
     member x.Kind = kind
+
+
     member x.Value = value
     member x.Values = notImplemented()
         //if x.Kind = TypedConstantKind.Array then
@@ -427,21 +429,26 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
     inherit AttributeData()
 
     let getTypeKind(entity:FSharpEntity) =
-        match entity.FullName with
-        | "System.Boolean"
-        | "System.SByte"
-        | "System.Int16"
-        | "System.Int32"
-        | "System.Int64"
-        | "System.Byte"
-        | "System.UInt16"
-        | "System.UInt32"
-        | "System.UInt64"
-        | "System.Single"
-        | "System.Double"
-        | "System.Char"
-        | "System.String"
-        | "System.Object" ->
+        let fullName =
+            entity.AbbreviatedTypeSafe
+            |> Option.bind (fun t -> t.TypeDefinitionSafe)
+            |> Option.map (fun typeDefinition -> typeDefinition.FullName)
+
+        match fullName with
+        | Some "System.Boolean"
+        | Some "System.SByte"
+        | Some "System.Int16"
+        | Some "System.Int32"
+        | Some "System.Int64"
+        | Some "System.Byte"
+        | Some "System.UInt16"
+        | Some "System.UInt32"
+        | Some "System.UInt64"
+        | Some "System.Single"
+        | Some "System.Double"
+        | Some "System.Char"
+        | Some "System.String"
+        | Some "System.Object" ->
             TypedConstantKind.Primitive
         | _ ->
             match entity with
@@ -459,18 +466,28 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
     override x.CommonNamedArguments =
         notImplemented()
 
+    /// substitute method for CommonConstructorArguments that uses our TypedConstant type
+    member x.ConstructorArguments =
+        attribute.ConstructorArguments
+        |> Seq.choose (fun (ty, obj) ->
+            ty.TypeDefinitionSafe
+            |> Option.map(fun entity ->
+                let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
+                let typeKind = getTypeKind entity
+                TypedConstant(typeSymbol, typeKind, obj)))
+        |> Seq.toImmutableArray
+
     /// substitute method for CommonNamedArguments that uses our TypedConstant type
     member x.NamedArguments =
-        let args =
-            attribute.NamedArguments
-            |> Seq.choose (fun (ty, nm, isField, obj) ->
-                ty.TypeDefinitionSafe()
-                |> Option.bind(fun entity ->
-                    let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
-                    let typeKind = getTypeKind entity
-                    let constant = TypedConstant(typeSymbol, typeKind, obj)
-                    KeyValuePair(nm, constant) |> Some))
-        args.ToImmutableArray()
+        attribute.NamedArguments
+        |> Seq.choose (fun (ty, nm, isField, obj) ->
+            ty.TypeDefinitionSafe
+            |> Option.map(fun entity ->
+                let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
+                let typeKind = getTypeKind entity
+                let constant = TypedConstant(typeSymbol, typeKind, obj)
+                KeyValuePair(nm, constant)))
+        |> Seq.toImmutableArray
 
 //TODO: Namespaces are never entities in FCS
 // even though an entity has an IsNamespace property

@@ -140,3 +140,25 @@ module ``Compilation tests`` =
              "SatelliteContractVersionAttribute"; "StringFreezingAttribute"]
 
         CollectionAssert.IsSubsetOf(expected, attrs)
+
+    [<Test>]
+    let ``Attribute constructor arguments``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            open System
+            type XmlnsDefinitionAttribute(xmlNamespace, clrNamespace) =
+                inherit Attribute
+
+            [<XmlnsDefinition("xmlns", "MyNamespace")>]
+            type MyDefinition() = class end
+            """
+            |> getCompilation
+
+        let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
+        let attrs = t.GetAttributes()
+
+        let attr = attrs.First();
+        let args = compilation.GetAttributeConstructorArguments(attr)
+        Assert.AreEqual("xmlns", args.[0].Value)
+        Assert.AreEqual("MyNamespace", args.[1].Value)
