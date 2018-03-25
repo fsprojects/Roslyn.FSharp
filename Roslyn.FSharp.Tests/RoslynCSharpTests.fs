@@ -175,9 +175,34 @@ module ``C# playground`` =
         let args = compilation.GetAttributeConstructorArguments attr
         Assert.AreEqual("xmlns", args.[0].Value)
         Assert.AreEqual("MyNamespace", args.[1].Value)
-        //namedArguments |> Seq.first
-        //let expectedKeys = ["xmlNamespace"; "clrNamespace"]
-        //let expectedValues = ["xmlns"; "NyNamespace"]
 
-        //CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Key))
-        //CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Value))
+    [<Test>]
+    let ``Attribute named arguments``() =
+        let compilation =
+            """
+            namespace MyNamespace;
+            using System;
+
+            public class XmlnsDefinitionAttribute : Attribute
+            {
+                public string XmlNamespace { get; set; }
+                public string ClrNamespace { get; set; }
+            }
+
+            [XmlnsDefinition(XmlNamespace="xmlns", ClrNamespace="MyNamespace")]
+            public class MyDefinition
+            {
+            }
+            """
+            |> getICompilation
+
+        let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
+        let attrs = t.GetAttributes()
+
+        let attr = attrs.First();
+        let namedArguments = compilation.GetAttributeNamedArguments attr
+        let expectedKeys = ["XmlNamespace"; "ClrNamespace"]
+        let expectedValues = ["xmlns"; "MyNamespace"]
+
+        CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Key))
+        CollectionAssert.AreEqual(expectedValues, namedArguments.Select(fun kv -> kv.Value.Value))
