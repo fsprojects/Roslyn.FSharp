@@ -16,6 +16,9 @@ module ``C# playground`` =
                 .AddSyntaxTrees(tree);
         compilation
 
+    let getICompilation(source:string) =
+        let compilation = getCompilation source
+        CompilationWrapper(compilation)
     [<Test>]
     let ``property get methods``() =
         let compilation = 
@@ -143,10 +146,11 @@ module ``C# playground`` =
         CollectionAssert.AreEqual(expected, attrs)
 
     [<Test>]
-    let ``Attribute named arguments``() =
+    let ``Attribute constructor arguments``() =
         let compilation =
             """
-            open System;
+            namespace MyNamespace;
+            using System;
             public class XmlnsDefinitionAttribute : Attribute
             {
                 public XmlnsDefinitionAttribute(
@@ -162,13 +166,18 @@ module ``C# playground`` =
             """
             |> getCompilation
 
-        let t = compilation.GetTypeByMetadataName("MyDefinition") 
-        let attr = t.GetAttributes()
+        let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
+        let attrs = t.GetAttributes()
 
-        let namedArguments = attr.First().NamedArguments
+        let attr = attrs.First();
 
-        let expectedKeys = ["xmlNamespace"; "clrNamespace"]
-        let expectedValues = ["xmlns"; "NyNamespace"]
+        let first = attr.ConstructorArguments |> Seq.head
+        let second = attr.ConstructorArguments |> Seq.last
+        Assert.AreEqual("xmlns", first.Value)
+        Assert.AreEqual("MyNamespace", second.Value)
+        //namedArguments |> Seq.first
+        //let expectedKeys = ["xmlNamespace"; "clrNamespace"]
+        //let expectedValues = ["xmlns"; "NyNamespace"]
 
-        CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Key))
-        CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Value))
+        //CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Key))
+        //CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Value))
