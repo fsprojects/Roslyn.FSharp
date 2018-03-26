@@ -137,8 +137,29 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
 
         member x.GetTypeArgumentCustomModifiers (ordinal) = notImplemented()
 
+and FSharpParameterSymbol(param: FSharpParameter, ordinal:int) =
+    inherit FSharpSymbolBase()
+    override x.GetAttributes() =
+        param.Attributes
+        |> Seq.map(fun a -> FSharpAttributeData(a) :> AttributeData)
+        |> Seq.toImmutableArray
+
+    interface IParameterSymbol with
+        member x.CustomModifiers = notImplemented()
+        member x.ExplicitDefaultValue = notImplemented()
+        member x.HasExplicitDefaultValue = notImplemented()
+        member x.IsOptional = param.IsOptionalArg
+        member x.IsParams =  notImplemented()
+        member x.IsThis = notImplemented()
+        member x.Ordinal = ordinal
+        member x.OriginalDefinition = x :> IParameterSymbol
+        member x.RefCustomModifiers = notImplemented()
+        member x.RefKind = notImplemented()
+        member x.Type =
+            FSharpTypeSymbol(param.Type.TypeDefinition) :> _
+
 and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
-    inherit FSharpISymbol(method, true, method.DeclarationLocation)
+    inherit FSharpISymbol(method)
 
     override x.Name = method.CompiledName
 
@@ -171,7 +192,12 @@ and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
 
         member x.OverriddenMethod = notImplemented()
 
-        member x.Parameters = notImplemented()
+        member x.Parameters =
+            method.CurriedParameterGroups
+            |> Seq.collect id
+            |> Seq.indexed
+            |> Seq.map(fun (idx, param) -> FSharpParameterSymbol(param, idx) :> IParameterSymbol)
+            |> Seq.toImmutableArray
 
         member x.PartialDefinitionPart = notImplemented()
 
@@ -214,13 +240,13 @@ and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
         member x.ReduceExtensionMethod (receiverType) = notImplemented()
 
 and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
-    inherit FSharpISymbol(entity, true, entity.DeclarationLocation)
+    inherit FSharpISymbol(entity)
 
     let memberToISymbol (m: FSharpMemberOrFunctionOrValue) : ISymbol =
         match m with
         | _ when m.IsProperty -> FSharpPropertySymbol(m) :> _
         | _ when m.IsMember -> FSharpMethodSymbol(m) :> _
-        | _ -> FSharpISymbol(m, true, m.DeclarationLocation) :> _
+        | _ -> FSharpISymbol(m) :> _
 
     let getMembers() =
         entity.TryGetMembersFunctionsAndValues
@@ -264,7 +290,7 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
             |> Seq.toImmutableArray
 
 and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
-    inherit FSharpISymbol(property, true, property.DeclarationLocation)
+    inherit FSharpISymbol(property)
 
     interface IPropertySymbol with
         member x.ExplicitInterfaceImplementations = notImplemented()
@@ -275,7 +301,7 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
             else
                 null
 
-        member x.IsIndexer = notImplemented()
+        member x.IsIndexer = false //TODO:
 
         member x.IsReadOnly = not property.HasSetterMethod
 
@@ -480,8 +506,10 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
     override x.CommonAttributeClass =
         FSharpNamedTypeSymbol(attribute.AttributeType) :> INamedTypeSymbol
     override x.CommonConstructorArguments = notImplemented()
-    override x.CommonAttributeConstructor = notImplemented()
-        //attribute.
+    override x.CommonAttributeConstructor =
+        x.CommonAttributeClass.Constructors
+        |> Seq.head //TODO: which constructor? need to match against args
+
     override x.CommonApplicationSyntaxReference = notImplemented()
     override x.CommonNamedArguments =
         notImplemented()
