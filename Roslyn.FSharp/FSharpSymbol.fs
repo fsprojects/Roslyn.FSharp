@@ -32,8 +32,11 @@ type FSharpSymbolBase () as this =
     abstract member GetAttributes : unit -> ImmutableArray<AttributeData>
     default this.GetAttributes() = ImmutableArray.Empty
 
+    abstract member Kind : SymbolKind
+    default this.Kind = SymbolKind.ErrorType
+
     interface ISymbol with
-        member x.Kind = SymbolKind.Local
+        member x.Kind = this.Kind
         member x.Language = "F#"
         member x.Name = this.Name
         member x.MetadataName = this.MetadataName

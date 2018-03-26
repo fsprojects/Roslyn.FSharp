@@ -319,6 +319,7 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
 
     override x.Name = namespaceName
     override x.DeclaredAccessibility = Accessibility.Public
+    override x.Kind = SymbolKind.Namespace
 
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
