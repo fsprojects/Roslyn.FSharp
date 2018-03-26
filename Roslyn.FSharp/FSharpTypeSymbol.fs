@@ -1,4 +1,4 @@
-﻿namespace Roslyn.FSharp
+﻿namespace rec Roslyn.FSharp
 
 open System.Collections.Immutable
 open System.Collections.Generic
@@ -6,11 +6,13 @@ open System.Collections.Generic
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpTypeSymbol (entity:FSharpEntity) =
-    inherit FSharpNamespaceOrTypeSymbol(entity)
-
+[<AutoOpen>]
+module TypeHelpers =
     let namedTypeFromEntity (entity:FSharpEntity) =
         FSharpNamedTypeSymbol(entity) :> INamedTypeSymbol
+
+type FSharpTypeSymbol (entity:FSharpEntity) =
+    inherit FSharpNamespaceOrTypeSymbol(entity)
 
     override this.GetAttributes () =
         entity.Attributes
@@ -226,7 +228,7 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
 
     let getTypeMembers() =
         entity.NestedEntities
-        |> Seq.map (fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
+        |> Seq.map namedTypeFromEntity
 
 
     interface INamespaceOrTypeSymbol with
@@ -311,19 +313,51 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
 
 and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, namespaceLevel: int) =
     inherit FSharpSymbolBase()
+    let getNamedTypes() =
+        entities
+        |> Seq.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
+
     override x.Name = namespaceName
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
         member x.ContainingCompilation = notImplemented()
         member x.IsGlobalNamespace = namespaceName = "global"
         member x.NamespaceKind = notImplemented()
-        member x.GetMembers () : INamespaceOrTypeSymbol seq = notImplemented()
-        member x.GetMembers () : ImmutableArray<ISymbol> = notImplemented()
-        member x.GetMembers (name:string) : INamespaceOrTypeSymbol seq = notImplemented()
-        member x.GetMembers (name:string) : ImmutableArray<ISymbol> = notImplemented()
-        member x.GetTypeMembers () = notImplemented()
-        member x.GetTypeMembers (name:string) = notImplemented()
-        member x.GetTypeMembers (name:string, arity:int) = notImplemented()
+        member x.GetMembers () : ImmutableArray<ISymbol> =
+            getNamedTypes()
+            |> Seq.cast<ISymbol>
+            |> Seq.toImmutableArray
+
+        member x.GetMembers () : INamespaceOrTypeSymbol seq =
+            getNamedTypes()
+            |> Seq.cast<INamespaceOrTypeSymbol>
+
+        member x.GetMembers (name:string) : INamespaceOrTypeSymbol seq =
+            getNamedTypes()
+            |> Seq.cast<INamespaceOrTypeSymbol>
+            |> Seq.filter(fun t -> t.Name = name)
+
+        member x.GetMembers (name:string) : ImmutableArray<ISymbol> =
+            getNamedTypes()
+            |> Seq.cast<ISymbol>
+            |> Seq.filter(fun t -> t.Name = name)
+            |> Seq.toImmutableArray
+
+        member x.GetTypeMembers () =
+            getNamedTypes()
+            |> Seq.toImmutableArray
+
+        member x.GetTypeMembers (name:string) =
+            getNamedTypes()
+            |> Seq.filter(fun t -> t.Name = name)
+            |> Seq.toImmutableArray
+
+        member x.GetTypeMembers (name:string, arity:int) =
+            getNamedTypes()
+            |> Seq.filter(fun t -> t.Name = name)
+            |> Seq.filter(fun t -> t.Arity = arity)
+            |> Seq.toImmutableArray
+
         member x.GetNamespaceMembers () =
             entities
             |> Seq.groupBy(fun entity ->

@@ -108,6 +108,37 @@ module ``Compilation tests`` =
         CollectionAssert.AreEqual(["Concurrent"; "Generic"; "ObjectModel"], namespaces)
 
     [<Test>]
+    let ``nested namespace types``() =
+        let getNamespaceMembers (ns: INamespaceSymbol) =
+            ns.GetNamespaceMembers()
+
+        let compilation = getCompilation ""
+        let mscorlib =
+            compilation.References |> Seq.find(fun r -> r.Display.EndsWith "mscorlib.dll")
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
+        let genericCollectionsNamespace =
+            asm.GlobalNamespace
+            |> getNamespaceMembers
+            |> Seq.find(fun n -> n.Name = "System")
+            |> getNamespaceMembers
+            |> Seq.find(fun n -> n.Name = "Collections")
+            |> getNamespaceMembers
+            |> Seq.find(fun n -> n.Name = "Generic")
+
+        let types =
+            genericCollectionsNamespace.GetMembers()
+
+        let typeNames =
+            types
+            |> Seq.map(fun n -> n.MetadataName)
+            |> List.ofSeq
+
+        printfn "%A" types
+        CollectionAssert.IsSubsetOf(["Dictionary`2"; "IDictionary`2"; "List`1"], typeNames)
+        CollectionAssert.AllItemsAreInstancesOfType(types, typeof<INamedTypeSymbol>)
+
+    [<Test>]
     let ``Assembly NamespaceNames``() =
         let compilation = getCompilation ""
         let mscorlib = compilation.References.First()
