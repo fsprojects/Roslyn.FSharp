@@ -58,8 +58,54 @@ module ``Compilation tests`` =
             |> Seq.map(fun n -> n.Name)
             |> List.ofSeq
 
+        printfn "%A" namespaces
         CollectionAssert.AreEqual(["Internal"; "Microsoft"; "Mono"; "System"; "XamMac"], namespaces)
 
+    [<Test>]
+    let ``Nested namespace GetNamespaceMembers``() =
+        let compilation = getCompilation ""
+        let mscorlib =
+            compilation.References |> Seq.find(fun r -> r.Display.EndsWith "mscorlib.dll")
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
+        let systemNamespace =
+            asm.GlobalNamespace.GetNamespaceMembers()
+            |> Seq.find(fun n -> n.Name = "System")
+
+        let namespaces =
+            systemNamespace.GetNamespaceMembers()
+            |> Seq.map(fun n -> n.Name)
+            |> List.ofSeq
+
+        printfn "%A" namespaces 
+        let expected =
+            ["Buffers"; "Collections"; "Configuration"; "Deployment"; "Diagnostics";
+             "Globalization"; "IO"; "Numerics"; "Reflection"; "Resources"; "Runtime";
+             "Security"; "Text"; "Threading"]
+        CollectionAssert.AreEqual(expected, namespaces)
+
+    [<Test>]
+    let ``Deeply nested namespace GetNamespaceMembers``() =
+        let compilation = getCompilation ""
+        let mscorlib =
+            compilation.References |> Seq.find(fun r -> r.Display.EndsWith "mscorlib.dll")
+
+        let asm = compilation.GetAssemblyOrModuleSymbol(mscorlib) :?> IAssemblySymbol
+        let systemNamespace =
+            asm.GlobalNamespace.GetNamespaceMembers()
+            |> Seq.find(fun n -> n.Name = "System")
+
+        let collectionsNamespace =
+            systemNamespace.GetNamespaceMembers()
+            |> Seq.find(fun n -> n.Name = "Collections")
+
+        let namespaces =
+            collectionsNamespace.GetNamespaceMembers()
+            |> Seq.map(fun n -> n.Name)
+            |> List.ofSeq
+
+        printfn "%A" namespaces 
+        CollectionAssert.AreEqual(["Concurrent"; "Generic"; "ObjectModel"], namespaces)
 
     [<Test>]
     let ``Assembly NamespaceNames``() =

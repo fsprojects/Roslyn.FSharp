@@ -22,11 +22,9 @@ type ICompilation =
 type CompilationWrapper(compilation: Compilation) =
     interface ICompilation with
         member x.GetAttributeConstructorArguments(attributeData) =
-            attributeData.NamedArguments
+            attributeData.ConstructorArguments
             |> Seq.map (fun arg ->
-                let name = arg.Key
-                let constant = arg.Value
-                Roslyn.FSharp.TypedConstant(constant.Type, constant.Kind, constant.Value))
+                Roslyn.FSharp.TypedConstant(arg.Type, arg.Kind, arg.Value))
             |> Seq.toImmutableArray
 
         member x.GetAttributeNamedArguments(attributeData) =
@@ -67,6 +65,11 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
 
         member x.References =
             checkProjectResults.ProjectContext.GetReferencedAssemblies()
+            //TODO: System.IO.FileNotFoundException: Could not load file or assembly 'FSharp.Core' or one of its dependencies
+            |> Seq.filter (fun a -> a.SimpleName <> "FSharp.Core") 
+            //TODO:System.IO.FileNotFoundException: Cannot resolve dependency to assembly because it has not been preloaded. When using the ReflectionOnly APIs, dependent assemblies must be pre-loaded or loaded on demand through the ReflectionOnlyAssemblyResolve event.
+            // File name: 'netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+            |> Seq.filter (fun a -> a.SimpleName <> "netstandard") 
             |> Seq.choose (fun asm -> asm.FileName)
             |> Seq.map(fun fileName -> MetadataReference.CreateFromFile (fileName) :> MetadataReference)
 

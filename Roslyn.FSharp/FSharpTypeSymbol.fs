@@ -75,7 +75,7 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
     override this.ContainingNamespace =
         // Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
         entity.Namespace
-        |> Option.map (fun n -> FSharpLimitedNamespaceSymbol(n) :> INamespaceSymbol)
+        |> Option.map (fun n -> FSharpLimitedNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
         |> Option.toObj
 
     interface INamedTypeSymbol with
@@ -311,7 +311,7 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
 
 /// Limited namespace symbol - only useful for fetching the name
 /// If we could go from FSharpEntity (type) -> FSharpEntity (containing namespace) we wouldn't need this
-and FSharpLimitedNamespaceSymbol (namespaceName: string) =
+and FSharpLimitedNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, namespaceLevel: int) =
     inherit FSharpSymbolBase()
     override x.Name = namespaceName
     interface INamespaceSymbol with
@@ -326,7 +326,21 @@ and FSharpLimitedNamespaceSymbol (namespaceName: string) =
         member x.GetTypeMembers () = notImplemented()
         member x.GetTypeMembers (name:string) = notImplemented()
         member x.GetTypeMembers (name:string, arity:int) = notImplemented()
-        member x.GetNamespaceMembers () = Seq.empty
+        member x.GetNamespaceMembers () =
+            entities
+            |> Seq.groupBy(fun entity ->
+                match entity.Namespace with
+                | Some ns -> 
+                    let namespaceParts = ns.Split('.')
+                    if namespaceParts.Length > namespaceLevel then
+                        namespaceParts.[namespaceLevel] |> Some
+                    else
+                        None
+                | None -> None)
+
+            |> Seq.filter(fun (ns, entities) -> ns.IsSome)
+            |> Seq.sortBy(fun (ns, entities) -> ns) // Roslyn sorts these
+            |> Seq.map (fun (ns, entities) -> FSharpLimitedNamespaceSymbol(ns.Value, entities, namespaceLevel+1) :> INamespaceSymbol)
         member x.IsNamespace = true
         member x.IsType = false
 
@@ -346,18 +360,15 @@ and FSharpGlobalNamespaceSymbol (assembly:FSharpAssembly) =
         member x.GetTypeMembers (name:string) = notImplemented()
         member x.GetTypeMembers (name:string, arity:int) = notImplemented()
         member x.GetNamespaceMembers () =
-            // TODO: this implementation is inefficient 
-            // but this snippet returns empty
-            //
-            // assembly.Contents.Entities
-            // |> Seq.filter (fun entity -> entity.IsNamespace)
             assembly.Contents.Entities
-            |> Seq.choose(fun entity -> entity.Namespace)
-            |> Seq.distinct
-            |> Seq.map(fun ns -> ns.Split('.').[0])
-            |> Seq.distinct
-            |> Seq.sort // Roslyn sorts these
-            |> Seq.map (fun ns -> FSharpLimitedNamespaceSymbol(ns) :> INamespaceSymbol)
+            |> Seq.groupBy(fun entity ->
+                match entity.Namespace with
+                | Some ns -> ns.Split('.').[0] |> Some
+                | None -> None)
+
+            |> Seq.filter(fun (ns, entities) -> ns.IsSome)
+            |> Seq.sortBy(fun (ns, entities) -> ns) // Roslyn sorts these
+            |> Seq.map (fun (ns, entities) -> FSharpLimitedNamespaceSymbol(ns.Value, entities, 1) :> INamespaceSymbol)
         member x.IsNamespace = true
         member x.IsType = false
 
@@ -373,11 +384,15 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
     interface IAssemblySymbol with
         member x.GlobalNamespace = FSharpGlobalNamespaceSymbol(assembly) :> INamespaceSymbol
         member x.Identity =
-            let asm = System.Reflection.Assembly.ReflectionOnlyLoad(assembly.SimpleName)
-            AssemblyIdentity.FromAssemblyDefinition asm
-            //TODO: Probably better to instantiate this directly,
-            // but I don't know where to get the information needed to construct
-            //AssemblyIdentity(name,version,cultureName,publicKey,hasPublicKey, isRetargetable,contentType)
+            //match assembly.FileName with
+            //| Some filename ->
+            //    let asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(filename)
+            //    AssemblyIdentity.FromAssemblyDefinition asm
+            ////TODO: Probably better to instantiate this directly,
+            //// but I don't know where to get the information needed to construct
+            ////AssemblyIdentity(name,version,cultureName,publicKey,hasPublicKey, isRetargetable,contentType)
+            //| None ->
+            AssemblyIdentity(assembly.SimpleName)
         member x.IsInteractive = notImplemented()
         member x.MightContainExtensionMethods = true //TODO: no idea
         member x.Modules = notImplemented()
