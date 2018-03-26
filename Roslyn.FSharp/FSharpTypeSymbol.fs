@@ -318,6 +318,8 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
         |> Seq.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
 
     override x.Name = namespaceName
+    override x.DeclaredAccessibility = Accessibility.Public
+
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
         member x.ContainingCompilation = notImplemented()
@@ -433,8 +435,6 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
 and TypedConstant(entity: ITypeSymbol, kind:TypedConstantKind, value:obj) =
     member x.Type = entity
     member x.Kind = kind
-
-
     member x.Value = value
     member x.Values = notImplemented()
         //if x.Kind = TypedConstantKind.Array then
