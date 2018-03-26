@@ -75,7 +75,7 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
     override this.ContainingNamespace =
         // Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
         entity.Namespace
-        |> Option.map (fun n -> FSharpLimitedNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
+        |> Option.map (fun n -> FSharpNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
         |> Option.toObj
 
     interface INamedTypeSymbol with
@@ -309,9 +309,7 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
 
         member x.TypeCustomModifiers = notImplemented()
 
-/// Limited namespace symbol - only useful for fetching the name
-/// If we could go from FSharpEntity (type) -> FSharpEntity (containing namespace) we wouldn't need this
-and FSharpLimitedNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, namespaceLevel: int) =
+and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, namespaceLevel: int) =
     inherit FSharpSymbolBase()
     override x.Name = namespaceName
     interface INamespaceSymbol with
@@ -340,35 +338,7 @@ and FSharpLimitedNamespaceSymbol (namespaceName: string, entities: FSharpEntity 
 
             |> Seq.filter(fun (ns, entities) -> ns.IsSome)
             |> Seq.sortBy(fun (ns, entities) -> ns) // Roslyn sorts these
-            |> Seq.map (fun (ns, entities) -> FSharpLimitedNamespaceSymbol(ns.Value, entities, namespaceLevel+1) :> INamespaceSymbol)
-        member x.IsNamespace = true
-        member x.IsType = false
-
-/// Symbol representing the global namespace.
-and FSharpGlobalNamespaceSymbol (assembly:FSharpAssembly) =
-    inherit FSharpSymbolBase()
-    interface INamespaceSymbol with
-        member x.ConstituentNamespaces = notImplemented()
-        member x.ContainingCompilation = notImplemented() //TODO: We can't construct a Compilation
-        member x.IsGlobalNamespace = true
-        member x.NamespaceKind = NamespaceKind.Assembly
-        member x.GetMembers () : INamespaceOrTypeSymbol seq = notImplemented()
-        member x.GetMembers () : ImmutableArray<ISymbol> = notImplemented()
-        member x.GetMembers (name:string) : INamespaceOrTypeSymbol seq = notImplemented()
-        member x.GetMembers (name:string) : ImmutableArray<ISymbol> = notImplemented()
-        member x.GetTypeMembers () = notImplemented()
-        member x.GetTypeMembers (name:string) = notImplemented()
-        member x.GetTypeMembers (name:string, arity:int) = notImplemented()
-        member x.GetNamespaceMembers () =
-            assembly.Contents.Entities
-            |> Seq.groupBy(fun entity ->
-                match entity.Namespace with
-                | Some ns -> ns.Split('.').[0] |> Some
-                | None -> None)
-
-            |> Seq.filter(fun (ns, entities) -> ns.IsSome)
-            |> Seq.sortBy(fun (ns, entities) -> ns) // Roslyn sorts these
-            |> Seq.map (fun (ns, entities) -> FSharpLimitedNamespaceSymbol(ns.Value, entities, 1) :> INamespaceSymbol)
+            |> Seq.map (fun (ns, entities) -> FSharpNamespaceSymbol(ns.Value, entities, namespaceLevel+1) :> INamespaceSymbol)
         member x.IsNamespace = true
         member x.IsType = false
 
@@ -382,7 +352,7 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         |> Seq.toImmutableArray
 
     interface IAssemblySymbol with
-        member x.GlobalNamespace = FSharpGlobalNamespaceSymbol(assembly) :> INamespaceSymbol
+        member x.GlobalNamespace = FSharpNamespaceSymbol("global", assembly.Contents.Entities, 0) :> INamespaceSymbol
         member x.Identity =
             //match assembly.FileName with
             //| Some filename ->
@@ -503,35 +473,3 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
                 let constant = TypedConstant(typeSymbol, typeKind, obj)
                 KeyValuePair(nm, constant)))
         |> Seq.toImmutableArray
-
-//TODO: Namespaces are never entities in FCS
-// even though an entity has an IsNamespace property
-//type FSharpNamespaceSymbol (entity:FSharpEntity) =
-    //inherit FSharpNamespaceOrTypeSymbol(entity)
-
-    //let getTypeMembers() =
-    //    entity.NestedEntities
-    //    |> Seq.map (fun e -> FSharpNamespaceOrTypeSymbol(e) :> INamespaceOrTypeSymbol)
-
-    //interface INamespaceSymbol with
-        //member x.ConstituentNamespaces = notImplemented()
-
-        //member x.ContainingCompilation = notImplemented()
-
-        //member x.IsGlobalNamespace = entity.FullName = "global"
-
-        //member x.NamespaceKind = notImplemented()
-
-        //member x.GetMembers () =
-        //    getTypeMembers()
-
-        //member x.GetMembers (name) =
-        //    getTypeMembers()
-        //    |> Seq.filter(fun m -> m.Name = name)
-
-        ///// Get all the members of this symbol that are namespaces 
-        //member x.GetNamespaceMembers () =
-            //entity.NestedEntities
-            //|> Seq.filter(fun m -> m.IsNamespace)
-            //|> Seq.map(fun n -> FSharpNamespaceSymbol(n) :> INamespaceSymbol)
-
