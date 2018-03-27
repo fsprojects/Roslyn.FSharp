@@ -1,5 +1,6 @@
 ﻿namespace rec Roslyn.FSharp
 
+open System
 open System.Collections.Immutable
 open System.Collections.Generic
 
@@ -14,10 +15,29 @@ module TypeHelpers =
 type FSharpTypeSymbol (entity:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(entity)
 
+    member x.Entity = entity
+
     override this.GetAttributes () =
         entity.Attributes
         |> Seq.map(fun a -> FSharpAttributeData(a) :> AttributeData)
         |> Seq.toImmutableArray
+
+    override x.Equals (other:obj) =
+        match other with
+        | :? FSharpTypeSymbol as symbol ->
+            entity = symbol.Entity
+        | _ -> false
+
+    override x.GetHashCode() = entity.GetHashCode()
+
+    override x.CommonEquals(other) = x.Equals(other)
+
+    override this.ContainingNamespace =
+        // Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
+        entity.Namespace
+        |> Option.map (fun n -> FSharpNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
+        |> Option.toObj
+
 
     interface ITypeSymbol with
         member x.AllInterfaces =
@@ -49,7 +69,7 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
         /// Currently we only care about definitions for entities, not uses
         member x.OriginalDefinition = x :> ITypeSymbol
 
-        member x.SpecialType = notImplemented() // int, string, void, enum, nullable etc
+        member x.SpecialType = SpecialType.None // int, string, void, enum, nullable etc
 
         member x.TypeKind =
             match entity with
@@ -73,15 +93,21 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
         (this :> INamespaceOrTypeSymbol).GetMembers().OfType<IMethodSymbol>()
         |> Seq.filter(fun m -> m.Name = ".ctor")
 
+    member x.Entity = entity
     override this.MetadataName = entity.LogicalName
-    override this.ContainingNamespace =
-        // Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
-        entity.Namespace
-        |> Option.map (fun n -> FSharpNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
-        |> Option.toObj
+
+    override x.Equals (other:obj) =
+        match other with
+        | :? FSharpNamedTypeSymbol as symbol ->
+            entity = symbol.Entity
+        | _ -> false
+
+    override x.CommonEquals other = x.Equals other
+
+    override x.GetHashCode() = entity.GetHashCode()
 
     interface INamedTypeSymbol with
-        member x.Arity = entity.GenericParameters.Count //TODO: check - is this what Arity means here? Constructors are IMethodSymbols
+        member x.Arity = entity.GenericParameters.Count
 
         member x.AssociatedSymbol = notImplemented()
 
@@ -139,10 +165,21 @@ and FSharpNamedTypeSymbol (entity: FSharpEntity) as this =
 
 and FSharpParameterSymbol(param: FSharpParameter, ordinal:int) =
     inherit FSharpSymbolBase()
+    member x.Parameter = param
+
     override x.GetAttributes() =
         param.Attributes
         |> Seq.map(fun a -> FSharpAttributeData(a) :> AttributeData)
         |> Seq.toImmutableArray
+
+    override x.Equals(other:obj) =
+        match other with
+        | :? FSharpParameter as otherParam ->
+            param = otherParam
+        | _ -> false
+
+    override x.CommonEquals other = x.Equals other
+    override x.GetHashCode() = param.GetHashCode()
 
     interface IParameterSymbol with
         member x.CustomModifiers = notImplemented()
@@ -161,7 +198,18 @@ and FSharpParameterSymbol(param: FSharpParameter, ordinal:int) =
 and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
     inherit FSharpISymbol(method)
 
+    member x.FSharpMethod = method
     override x.Name = method.CompiledName
+
+    override x.Equals(other:obj) =
+        match other with
+        | :? FSharpMethodSymbol as otherMethod ->
+            method = otherMethod.FSharpMethod
+        | _ -> false
+
+    override x.CommonEquals other = x.Equals other
+
+    override x.GetHashCode() = method.GetHashCode()
 
     interface IMethodSymbol with
         member x.Arity = notImplemented()
@@ -292,6 +340,8 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
 and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
     inherit FSharpISymbol(property)
 
+    override x.Kind = SymbolKind.Property
+
     interface IPropertySymbol with
         member x.ExplicitInterfaceImplementations = notImplemented()
 
@@ -332,7 +382,7 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
         member x.Type =
             property.ReturnParameter.Type
             |> typeDefinitionSafe
-            |> Option.map(fun e -> FSharpTypeSymbol(e) :> ITypeSymbol)
+            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> ITypeSymbol)
             |> Option.toObj
 
         member x.TypeCustomModifiers = notImplemented()
@@ -343,9 +393,22 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
         entities
         |> Seq.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
 
+    member x.Entities = entities
     override x.Name = namespaceName
     override x.DeclaredAccessibility = Accessibility.Public
     override x.Kind = SymbolKind.Namespace
+
+    override x.Equals(other:obj) =
+        match other with
+        | :? FSharpNamespaceSymbol as otherNs ->
+            //TODO: fix this
+            (entities |> Seq.head).Namespace = (otherNs.Entities |> Seq.head).Namespace
+        | _ -> false
+
+    //TODO: fix this
+    override x.GetHashCode() = (entities |> Seq.head).Namespace.GetHashCode()
+
+    override x.CommonEquals(other) = x.Equals(other)
 
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
@@ -511,8 +574,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         |> Seq.head //TODO: which constructor? need to match against args
 
     override x.CommonApplicationSyntaxReference = notImplemented()
-    override x.CommonNamedArguments =
-        notImplemented()
+    override x.CommonNamedArguments = notImplemented()
 
     /// substitute method for CommonConstructorArguments that uses our TypedConstant type
     member x.ConstructorArguments =

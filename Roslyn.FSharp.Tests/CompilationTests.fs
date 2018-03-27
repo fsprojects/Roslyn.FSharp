@@ -20,6 +20,21 @@ module ``Compilation tests`` =
         Assert.AreEqual("MyType", namedType.Name)
         Assert.AreEqual("MyType", namedType.MetadataName)
 
+    [<Test>]
+    let ``GetTypeByMetadataName returns types from references``() =
+        let compilation = getCompilation ""
+        let dictionary = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        Assert.AreEqual("List", dictionary.Name)
+
+    [<Test>]
+    let ``Named types are equal``() =
+        let compilation = getCompilation ""
+        let dictionary1 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        let dictionary2 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        //let areEqual = dictionary1.Equals(dictionary2)
+        let areEqual = dictionary1 = dictionary2
+        //Assert.AreEqual(dictionary1, dictionary2)
+        Assert.True areEqual
 
     [<Test>]
     let ``can get compilation name``() =

@@ -35,6 +35,17 @@ type FSharpSymbolBase () as this =
     abstract member Kind : SymbolKind
     default this.Kind = SymbolKind.ErrorType
 
+    override x.ToString() = this.Name
+
+    /// We can't implement IEquatable<Symbol> on the various symbol types due to:
+    /// ```
+    /// Error FS0443: This type implements the same interface at different generic instantiations 'IEquatable<ISymbol>' and 'IEquatable<FSharpTypeSymbol>'.
+    /// This is not permitted in this version of F#.
+    /// ```
+    /// Overriding this member seems to be the best that we can do.
+    abstract member CommonEquals : ISymbol -> bool
+    default this.CommonEquals(symbol:ISymbol) = false
+
     interface ISymbol with
         member x.Kind = this.Kind
         member x.Language = "F#"
@@ -70,7 +81,7 @@ type FSharpSymbolBase () as this =
             this.ToMinimalDisplayString(_semanticModel, _position, _format)
         member x.ToMinimalDisplayParts (_semanticModel, _position, _format) = ImmutableArray.Empty //TODO
         member x.HasUnsupportedMetadata = false //TODO
-        member x.Equals (other:ISymbol) = x.Equals(other)
+        member x.Equals (other:ISymbol) = this.CommonEquals other
 
 type FSharpISymbol (symbol:FSharpSymbol) =
     inherit FSharpSymbolBase()

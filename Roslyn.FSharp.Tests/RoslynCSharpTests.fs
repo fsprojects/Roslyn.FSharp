@@ -53,6 +53,12 @@ module ``C# playground`` =
         Assert.AreEqual("mscorlib", asm.Name)
 
     [<Test>]
+    let ``GetTypeByMetadataName returns types from references``() =
+        let compilation = getCompilation ""
+        let dictionary = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        Assert.AreEqual("List", dictionary.Name)
+
+    [<Test>]
     let ``Global namespace GetNamespaceMembers``() =
         let compilation = getCompilation ""
         let reference = compilation.References.First()
