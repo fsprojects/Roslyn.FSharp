@@ -31,9 +31,7 @@ module ``Compilation tests`` =
         let compilation = getCompilation ""
         let dictionary1 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
         let dictionary2 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
-        //let areEqual = dictionary1.Equals(dictionary2)
         let areEqual = dictionary1 = dictionary2
-        //Assert.AreEqual(dictionary1, dictionary2)
         Assert.True areEqual
 
     [<Test>]

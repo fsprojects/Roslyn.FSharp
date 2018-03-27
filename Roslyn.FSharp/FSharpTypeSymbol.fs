@@ -393,22 +393,26 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
         entities
         |> Seq.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
 
-    member x.Entities = entities
-    override x.Name = namespaceName
+    member x.LongNamespaceName = namespaceName
+    override x.Name =
+        namespaceName.Split('.')
+        |> Seq.last
+
     override x.DeclaredAccessibility = Accessibility.Public
     override x.Kind = SymbolKind.Namespace
 
     override x.Equals(other:obj) =
         match other with
-        | :? FSharpNamespaceSymbol as otherNs ->
-            //TODO: fix this
-            (entities |> Seq.head).Namespace = (otherNs.Entities |> Seq.head).Namespace
+        | :? FSharpNamespaceSymbol as otherNs -> namespaceName = otherNs.LongNamespaceName
         | _ -> false
 
-    //TODO: fix this
-    override x.GetHashCode() = (entities |> Seq.head).Namespace.GetHashCode()
+    override x.GetHashCode() = x.Name.GetHashCode()
 
     override x.CommonEquals(other) = x.Equals(other)
+
+    override x.ToDisplayString(_format) = namespaceName
+
+    override x.ToString() = namespaceName
 
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()
@@ -451,20 +455,31 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
             |> Seq.toImmutableArray
 
         member x.GetNamespaceMembers () =
+            // e.g. For System.Collections.Generic
+            // level 1 - Group entities by 'System'
+            // level 2 - Group entities by 'System.Collections'
+            // level 3 - Group entities by 'System.Collections.Generic'
+            // level 0 - reserved for global namespace
             entities
             |> Seq.groupBy(fun entity ->
                 match entity.Namespace with
                 | Some ns -> 
                     let namespaceParts = ns.Split('.')
                     if namespaceParts.Length > namespaceLevel then
-                        namespaceParts.[namespaceLevel] |> Some
+                        namespaceParts
+                        |> Array.take (namespaceLevel + 1)
+                        |> String.concat "."
+                        |> Some
                     else
                         None
                 | None -> None)
 
-            |> Seq.filter(fun (ns, entities) -> ns.IsSome)
-            |> Seq.sortBy(fun (ns, entities) -> ns) // Roslyn sorts these
-            |> Seq.map (fun (ns, entities) -> FSharpNamespaceSymbol(ns.Value, entities, namespaceLevel+1) :> INamespaceSymbol)
+            |> Seq.choose(fun (ns, entities) ->
+               ns |> Option.map(fun n -> n, entities))
+            |> Seq.map (fun (ns, entities) -> 
+                FSharpNamespaceSymbol(ns, entities, namespaceLevel+1) :> INamespaceSymbol)
+            |> Seq.sortBy(fun n -> n.Name) // Roslyn sorts these
+
         member x.IsNamespace = true
         member x.IsType = false
 
@@ -477,11 +492,15 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         |> Seq.map(fun attr -> FSharpAttributeData(attr) :> AttributeData)
         |> Seq.toImmutableArray
 
-
     override this.ToString() = assembly.SimpleName
 
     interface IAssemblySymbol with
-        member x.GlobalNamespace = FSharpNamespaceSymbol("global", assembly.Contents.Entities, 0) :> INamespaceSymbol
+        member x.GlobalNamespace =
+            let entities =
+                assembly.Contents.Attributes
+                |> Seq.map(fun a -> a.AttributeType)
+                |> Seq.append assembly.Contents.Entities
+            FSharpNamespaceSymbol("global", entities, 0) :> INamespaceSymbol
         member x.Identity =
             //match assembly.FileName with
             //| Some filename ->

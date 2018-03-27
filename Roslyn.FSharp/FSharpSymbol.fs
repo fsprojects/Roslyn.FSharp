@@ -46,6 +46,9 @@ type FSharpSymbolBase () as this =
     abstract member CommonEquals : ISymbol -> bool
     default this.CommonEquals(symbol:ISymbol) = false
 
+    abstract member ToDisplayString : SymbolDisplayFormat -> string
+    default this.ToDisplayString(_format) = this.Name
+
     interface ISymbol with
         member x.Kind = this.Kind
         member x.Language = "F#"
@@ -75,7 +78,7 @@ type FSharpSymbolBase () as this =
         member x.GetDocumentationCommentId () = this.GetDocumentationCommentId()
         member x.GetDocumentationCommentXml (_culture, _expand, _token) =
             this.GetDocumentationCommentXml(_culture, _expand, _token)
-        member x.ToDisplayString _format = this.Name
+        member x.ToDisplayString format = this.ToDisplayString(format)
         member x.ToDisplayParts _format = ImmutableArray.Empty //TODO
         member x.ToMinimalDisplayString (_semanticModel, _position, _format) =
             this.ToMinimalDisplayString(_semanticModel, _position, _format)
