@@ -477,6 +477,9 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         |> Seq.map(fun attr -> FSharpAttributeData(attr) :> AttributeData)
         |> Seq.toImmutableArray
 
+
+    override this.ToString() = assembly.SimpleName
+
     interface IAssemblySymbol with
         member x.GlobalNamespace = FSharpNamespaceSymbol("global", assembly.Contents.Entities, 0) :> INamespaceSymbol
         member x.Identity =
@@ -532,6 +535,7 @@ and TypedConstant(entity: ITypeSymbol, kind:TypedConstantKind, value:obj) =
         //    sequence |> Seq.toImmutableArray
         //else
             //ImmutableArray.Empty
+    override x.ToString() = string value
 
 
 and FSharpAttributeData(attribute: FSharpAttribute) =
@@ -575,6 +579,8 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
 
     override x.CommonApplicationSyntaxReference = notImplemented()
     override x.CommonNamedArguments = notImplemented()
+
+    override this.ToString() = this.CommonAttributeClass.Name
 
     /// substitute method for CommonConstructorArguments that uses our TypedConstant type
     member x.ConstructorArguments =

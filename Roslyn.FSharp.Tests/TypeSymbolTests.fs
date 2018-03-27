@@ -119,7 +119,7 @@ module ``Type symbol tests`` =
         Assert.AreEqual("int", property.Type.Name)
 
     [<Test>]
-    let ``can get nested type``() =
+    let ``can get nested type indirectly``() =
         let compilation =
             """
             namespace MyNamespace
@@ -132,6 +132,22 @@ module ``Type symbol tests`` =
         let nestedType =
             compilation.GetTypeByMetadataName("MyNamespace.myModule").GetTypeMembers("MyType")
             |> Seq.head
+
+        Assert.AreEqual("MyType", nestedType.Name)
+
+    [<Test>]
+    let ``can get nested type directly``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            module myModule =
+                type MyType() =
+                    member x.A = 1
+            """
+            |> getCompilation
+
+        let nestedType =
+            compilation.GetTypeByMetadataName("MyNamespace.myModule.MyType")
 
         Assert.AreEqual("MyType", nestedType.Name)
 
