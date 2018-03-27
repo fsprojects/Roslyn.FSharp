@@ -59,7 +59,15 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
                 fullyQualifiedMetadataName.Split '.'
                 |> List.ofArray
 
-            assemblySignature.FindEntityByPath path 
+            let selfAndReferences =
+                seq {
+                    yield assemblySignature
+                    yield! checkProjectResults.ProjectContext.GetReferencedAssemblies()
+                           |> List.map(fun a -> a.Contents)
+                }
+
+            selfAndReferences
+            |> Seq.tryPick(fun a -> a.FindEntityByPath path)
             |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
             |> Option.toObj
 
