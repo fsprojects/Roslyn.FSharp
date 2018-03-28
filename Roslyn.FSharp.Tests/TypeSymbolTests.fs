@@ -170,3 +170,22 @@ module ``Type symbol tests`` =
         CollectionAssert.Contains(metadataNames, "IDictionary`2")
         CollectionAssert.Contains(interfaceNamespaces, "System.Collections.Generic")
 
+    [<Test>]
+    let ``Can get reflection name (full name)``() =
+        let compilation =
+            """
+            namespace namespace1
+                module X = let x = 1
+            // nested namespaced work a little differently in F# than C#.. must be fully qualified
+            namespace namespace1.namespace2
+            module myModule =
+                type MyGenericClass<'a, 'b>() =
+                    member x.X = 1
+                        let x = 1
+            """
+            |> getCompilation
+
+        //TODO: why does this not work for compilation.Assembly.GetTypeByMetadataName ?
+        let fqn = "namespace1.namespace2.myModule+MyGenericClass`2"
+        let namedType = compilation.GetTypeByMetadataName fqn
+        Assert.AreEqual(fqn, namedType.GetFullMetadataName())

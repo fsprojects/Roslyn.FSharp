@@ -12,6 +12,12 @@ module TypeHelpers =
     let namedTypeFromEntity (entity:FSharpEntity) =
         FSharpNamedTypeSymbol(entity) :> INamedTypeSymbol
 
+    let namespaceOrTypeSymbol (entity:FSharpEntity) =
+        if entity.IsNamespace then
+            FSharpEntityNamespaceSymbol(entity) :> INamespaceOrTypeSymbol
+        else
+            FSharpNamedTypeSymbol(entity) :> INamespaceOrTypeSymbol
+
 type FSharpTypeSymbol (entity:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(entity)
 
@@ -32,16 +38,10 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
 
     override x.CommonEquals(other) = x.Equals(other)
 
-    override this.ContainingNamespace =
-        // Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
-        // TODO: we can't traverse from NamespaceSymbol to ContainingNamespace
-        // when we construct the NamespaceSymbol this way
-        entity.Namespace
-        |> Option.map (fun n -> FSharpNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
-        |> Option.toObj
 
     override this.ContainingType =
         entity.DeclaringEntity
+        |> Option.filter(fun e -> not e.IsNamespace)
         |> Option.map namedTypeFromEntity
         |> Option.toObj
 
@@ -310,7 +310,22 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
         entity.NestedEntities
         |> Seq.map namedTypeFromEntity
 
+    override this.ContainingNamespace =
+        let rec firstNamespace (entity:FSharpEntity option) =
+            entity
+            |> Option.bind(fun e ->
+                if e.IsNamespace then Some e else firstNamespace e.DeclaringEntity)
 
+        entity.DeclaringEntity
+        |> firstNamespace
+        |> Option.map (fun e -> FSharpEntityNamespaceSymbol(e) :> INamespaceSymbol)
+        |> Option.toObj
+        //// Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
+        //// TODO: we can't traverse from NamespaceSymbol to ContainingNamespace
+        //// when we construct the NamespaceSymbol this way
+        //entity.Namespace
+        //|> Option.map (fun n -> FSharpNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
+        //|> Option.toObj
     interface INamespaceOrTypeSymbol with
         member x.IsNamespace = entity.IsNamespace
 
@@ -393,11 +408,42 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
 
         member x.TypeCustomModifiers = notImplemented()
 
+and FSharpEntityNamespaceSymbol(entity: FSharpEntity) =
+    inherit FSharpNamespaceOrTypeSymbol(entity)
+    let nestedSymbols() =
+        entity.NestedEntities
+        |> Seq.map namespaceOrTypeSymbol
+
+    override x.MetadataName = x.Name
+
+    override x.ToDisplayString(_format) =
+        match entity.Namespace with
+        | Some ns -> sprintf "%s.%s" ns entity.DisplayName
+        | None -> entity.DisplayName
+
+    interface INamespaceSymbol with
+        member x.GetNamespaceMembers () : INamespaceSymbol seq =
+            entity.NestedEntities
+            |> Seq.filter (fun e -> e.IsNamespace)
+            |> Seq.map (fun e -> FSharpEntityNamespaceSymbol(e) :> INamespaceSymbol)
+
+        member x.GetMembers () : INamespaceOrTypeSymbol seq =
+            nestedSymbols()
+
+        member x.GetMembers (name) : INamespaceOrTypeSymbol seq =
+            nestedSymbols()
+            |> Seq.filter(fun s -> s.Name = name)
+
+        member x.ConstituentNamespaces = notImplemented()
+        member x.ContainingCompilation = notImplemented()
+        member x.IsGlobalNamespace = entity.DisplayName = "global"
+        member x.NamespaceKind = notImplemented()
+
 and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, namespaceLevel: int) =
     inherit FSharpSymbolBase()
     let getNamedTypes() =
         entities
-        |> Seq.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
+        |> Seq.map namedTypeFromEntity
 
     member x.LongNamespaceName = namespaceName
     override x.Name =
@@ -419,6 +465,9 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
     override x.ToDisplayString(_format) = namespaceName
 
     override x.ToString() = namespaceName
+    override x.MetadataName = x.Name
+
+    override this.ContainingNamespace = null
 
     interface INamespaceSymbol with
         member x.ConstituentNamespaces = notImplemented()

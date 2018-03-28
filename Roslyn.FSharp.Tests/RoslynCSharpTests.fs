@@ -289,3 +289,27 @@ module ``C# playground`` =
 
         CollectionAssert.AreEqual(expectedKeys, namedArguments.Select(fun kv -> kv.Key))
         CollectionAssert.AreEqual(expectedValues, namedArguments.Select(fun kv -> kv.Value.Value))
+
+    [<Test>]
+    let ``Can get reflection name (full name)``() =
+        let compilation =
+            """
+            namespace namespace1
+            {
+                namespace namespace2
+                {
+                    public class MyGenericClass<string, int>
+                    {
+                        public class MyClass
+                        {
+                            public int MyProperty { get; set; }
+                        }
+                    }
+                }
+            }
+            """
+            |> getCompilation
+
+        let fqn = "namespace1.namespace2.MyGenericClass`2+MyClass"
+        let namedType = compilation.GetTypeByMetadataName fqn
+        Assert.AreEqual(fqn, namedType.GetFullMetadataName())

@@ -57,6 +57,7 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
             let path =
                 fullyQualifiedMetadataName.Split '.'
+                |> Array.collect(fun s -> s.Split '+')
                 |> List.ofArray
 
             let selfAndReferences =

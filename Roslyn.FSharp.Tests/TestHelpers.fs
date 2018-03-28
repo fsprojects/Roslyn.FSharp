@@ -24,6 +24,30 @@ module extensions =
                       yield! getBaseTypesAndThis current.BaseType ]
             getBaseTypesAndThis this
 
+        /// Gets the full MetadataName(ReflectionName in NR5).
+        /// Example: Namespace1.Namespace2.Classs1+NestedClassWithTwoGenericTypes`2+NestedClassWithoutGenerics
+        member this.GetFullMetadataName() =
+            let rec prependParentTypes (parentType:INamedTypeSymbol) res =
+                match parentType with
+                | null -> res
+                | parent ->
+                    printfn "containing type %A" parentType.ContainingType
+                    prependParentTypes parentType.ContainingType
+                        (sprintf "%s+%s" parentType.MetadataName res)
+
+            let rec prependNamespaces (ns:INamespaceSymbol) res =
+                match ns with
+                | null -> res
+                | _ when ns.IsGlobalNamespace -> res
+                | _ ->
+                    printfn "metadata name - %s" ns.MetadataName
+                    prependNamespaces ns.ContainingNamespace
+                        (sprintf "%s.%s" ns.MetadataName res)
+
+            printfn "metadata name %s" this.MetadataName
+            prependParentTypes this.ContainingType this.MetadataName
+            |> prependNamespaces this.ContainingNamespace
+// namespace2.namespace1+namespace2+MyGenericClass
     type INamespaceSymbol with
         member x.GetFullName() =
             x.ToDisplayString (SymbolDisplayFormat.CSharpErrorMessageFormat)
