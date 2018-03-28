@@ -29,10 +29,16 @@ module ``Compilation tests`` =
     [<Test>]
     let ``Named types are equal``() =
         let compilation = getCompilation ""
-        let dictionary1 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
-        let dictionary2 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
-        let areEqual = dictionary1 = dictionary2
-        Assert.True areEqual
+        let list1 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        let list2 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        Assert.AreEqual (list1, list2)
+
+    [<Test>]
+    let ``NamespaceTypes are equal``() =
+        let compilation = getCompilation ""
+        let list1 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        let list2 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        Assert.AreEqual (list1.ContainingNamespace, list2.ContainingNamespace)
 
     [<Test>]
     let ``can get compilation name``() =

@@ -47,7 +47,7 @@ module extensions =
             printfn "metadata name %s" this.MetadataName
             prependParentTypes this.ContainingType this.MetadataName
             |> prependNamespaces this.ContainingNamespace
-// namespace2.namespace1+namespace2+MyGenericClass
+
     type INamespaceSymbol with
         member x.GetFullName() =
             x.ToDisplayString (SymbolDisplayFormat.CSharpErrorMessageFormat)

@@ -181,7 +181,6 @@ module ``Type symbol tests`` =
             module myModule =
                 type MyGenericClass<'a, 'b>() =
                     member x.X = 1
-                        let x = 1
             """
             |> getCompilation
 

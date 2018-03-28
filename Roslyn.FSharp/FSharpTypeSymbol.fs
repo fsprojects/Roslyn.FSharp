@@ -414,12 +414,19 @@ and FSharpEntityNamespaceSymbol(entity: FSharpEntity) =
         entity.NestedEntities
         |> Seq.map namespaceOrTypeSymbol
 
+    member x.Entity = entity
     override x.MetadataName = x.Name
 
     override x.ToDisplayString(_format) =
         match entity.Namespace with
         | Some ns -> sprintf "%s.%s" ns entity.DisplayName
         | None -> entity.DisplayName
+
+    override x.Equals(other:obj) = entity = x.Entity
+
+    override x.GetHashCode() = entity.GetHashCode()
+
+    override x.CommonEquals(other) = x.Equals(other)
 
     interface INamespaceSymbol with
         member x.GetNamespaceMembers () : INamespaceSymbol seq =
