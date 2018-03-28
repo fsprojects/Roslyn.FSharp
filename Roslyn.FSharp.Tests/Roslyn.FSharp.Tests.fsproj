@@ -176,7 +176,7 @@
       <HintPath>..\packages\Microsoft.DiaSymReader.PortablePdb.1.2.0\lib\net45\Microsoft.DiaSymReader.PortablePdb.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Compiler.Service">
-      <HintPath>..\packages\FSharp.Compiler.Service.22.0.1\lib\net45\FSharp.Compiler.Service.dll</HintPath>
+      <HintPath>..\..\..\src\visualfsharp\release\fcs\net45\FSharp.Compiler.Service.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

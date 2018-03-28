@@ -38,7 +38,6 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
 
     override x.CommonEquals(other) = x.Equals(other)
 
-
     override this.ContainingType =
         entity.DeclaringEntity
         |> Option.filter(fun e -> not e.IsNamespace)
@@ -310,6 +309,8 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
         entity.NestedEntities
         |> Seq.map namedTypeFromEntity
 
+    member x.Entity = entity
+
     override this.ContainingNamespace =
         let rec firstNamespace (entity:FSharpEntity option) =
             entity
@@ -414,7 +415,6 @@ and FSharpEntityNamespaceSymbol(entity: FSharpEntity) =
         entity.NestedEntities
         |> Seq.map namespaceOrTypeSymbol
 
-    member x.Entity = entity
     override x.MetadataName = x.Name
 
     override x.ToDisplayString(_format) =
@@ -422,7 +422,12 @@ and FSharpEntityNamespaceSymbol(entity: FSharpEntity) =
         | Some ns -> sprintf "%s.%s" ns entity.DisplayName
         | None -> entity.DisplayName
 
-    override x.Equals(other:obj) = entity = x.Entity
+    override x.Equals(other:obj) =
+        match other with
+        | :? FSharpNamespaceOrTypeSymbol as oth -> entity = oth.Entity
+        | :? FSharpNamespaceSymbol as oth ->
+            oth.LongNamespaceName = x.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)
+        | _ -> false
 
     override x.GetHashCode() = entity.GetHashCode()
 
@@ -459,13 +464,15 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
 
     override x.DeclaredAccessibility = Accessibility.Public
     override x.Kind = SymbolKind.Namespace
-
     override x.Equals(other:obj) =
         match other with
-        | :? FSharpNamespaceSymbol as otherNs -> namespaceName = otherNs.LongNamespaceName
+        | :? FSharpNamespaceOrTypeSymbol as oth ->
+            x.LongNamespaceName = oth.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)
+        | :? FSharpNamespaceSymbol as oth ->
+            oth.LongNamespaceName = x.LongNamespaceName
         | _ -> false
 
-    override x.GetHashCode() = x.Name.GetHashCode()
+    override x.GetHashCode() = namespaceName.GetHashCode()
 
     override x.CommonEquals(other) = x.Equals(other)
 
