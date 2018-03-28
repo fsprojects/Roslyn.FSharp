@@ -34,10 +34,16 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
 
     override this.ContainingNamespace =
         // Ideally we would want to be able to fetch the FSharpEntity representing the namespace here
+        // TODO: we can't traverse from NamespaceSymbol to ContainingNamespace
+        // when we construct the NamespaceSymbol this way
         entity.Namespace
         |> Option.map (fun n -> FSharpNamespaceSymbol(n, Seq.empty, 0) :> INamespaceSymbol)
         |> Option.toObj
 
+    override this.ContainingType =
+        entity.DeclaringEntity
+        |> Option.map namedTypeFromEntity
+        |> Option.toObj
 
     interface ITypeSymbol with
         member x.AllInterfaces =
@@ -268,7 +274,7 @@ and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
         member x.ReturnType =
             method.ReturnParameter.Type
             |> typeDefinitionSafe
-            |> Option.map(fun e -> FSharpTypeSymbol(e) :> ITypeSymbol)
+            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> ITypeSymbol)
             |> Option.toObj
 
         member x.ReturnTypeCustomModifiers = notImplemented()

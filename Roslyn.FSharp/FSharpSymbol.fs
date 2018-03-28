@@ -48,6 +48,8 @@ type FSharpSymbolBase () as this =
 
     abstract member ToDisplayString : SymbolDisplayFormat -> string
     default this.ToDisplayString(_format) = this.Name
+    abstract member ContainingType : INamedTypeSymbol
+    default this.ContainingType = notImplemented()
 
     interface ISymbol with
         member x.Kind = this.Kind
@@ -57,7 +59,7 @@ type FSharpSymbolBase () as this =
         member x.ContainingSymbol = null //TODO
         member x.ContainingAssembly = null //TODO
         member x.ContainingModule = null //TODO
-        member x.ContainingType = null ////TODO for entities or functions this will be available
+        member x.ContainingType = this.ContainingType
         member x.ContainingNamespace = this.ContainingNamespace
         member x.IsDefinition = false
         member x.IsStatic = false //TODO
