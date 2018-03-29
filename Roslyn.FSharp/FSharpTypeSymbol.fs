@@ -74,8 +74,29 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
         /// Currently we only care about definitions for entities, not uses
         member x.OriginalDefinition = x :> ITypeSymbol
 
-        member x.SpecialType = SpecialType.None // int, string, void, enum, nullable etc
+        member x.SpecialType = 
+            let fullName =
+                entity.AbbreviatedTypeSafe
+                |> Option.bind (fun t -> t.TypeDefinitionSafe)
+                |> Option.map (fun typeDefinition -> typeDefinition.FullName)
 
+            match fullName with
+            | Some "System.Boolean" -> SpecialType.System_Boolean
+            | Some "System.SByte" -> SpecialType.System_SByte
+            | Some "System.Int16" -> SpecialType.System_Int16
+            | Some "System.Int32" -> SpecialType.System_Int32
+            | Some "System.Int64" -> SpecialType.System_Int64
+            | Some "System.Byte" -> SpecialType.System_Byte
+            | Some "System.UInt16" -> SpecialType.System_UInt16
+            | Some "System.UInt32" -> SpecialType.System_UInt32
+            | Some "System.UInt64" -> SpecialType.System_UInt64
+            | Some "System.Single" -> SpecialType.System_Single
+            | Some "System.Double" -> SpecialType.System_Double
+            | Some "System.Char" -> SpecialType.System_Char
+            | Some "System.String" -> SpecialType.System_String
+            | Some "System.Object" -> SpecialType.System_Object
+            //TODO: Many more special types
+            | _ -> SpecialType.None
         member x.TypeKind =
             match entity with
             | _ when entity.IsArrayType -> TypeKind.Array
