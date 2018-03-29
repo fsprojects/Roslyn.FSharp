@@ -3,7 +3,7 @@
 open System
 open System.Collections.Immutable
 open System.Collections.Generic
-
+open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
@@ -683,8 +683,21 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         FSharpNamedTypeSymbol(attribute.AttributeType) :> INamedTypeSymbol
     override x.CommonConstructorArguments = notImplemented()
     override x.CommonAttributeConstructor =
-        x.CommonAttributeClass.Constructors
-        |> Seq.head //TODO: which constructor? need to match against args
+        let constructors =
+            attribute.AttributeType.MembersFunctionsAndValues
+            |> Seq.filter(fun m -> m.CompiledName = ".ctor")
+
+        let argTypes = attribute.ConstructorArguments |> Seq.map fst
+        let compareParamTypes(c:FSharpMemberOrFunctionOrValue) =
+            let parameters = c.CurriedParameterGroups |> Seq.collect id
+            let parameterTypes = parameters |> Seq.map(fun p -> p.Type)
+            argTypes.SequenceEqual(parameterTypes)
+
+        let constructor =
+            constructors
+            |> Seq.find compareParamTypes
+
+        FSharpMethodSymbol(constructor) :> _
 
     override x.CommonApplicationSyntaxReference = notImplemented()
     override x.CommonNamedArguments = notImplemented()
