@@ -46,8 +46,11 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
 
     override this.GetDocumentationCommentId() = entity.XmlDocSig
 
-    override this.GetDocumentationCommentXml(_culture, _expand, _token) =
-        String.concat "\n" entity.XmlDoc
+    override this.GetDocumentationCommentXml(culture, _expand, token) =
+        if entity.XmlDoc.Count > 0 then
+            String.concat "\n" entity.XmlDoc
+        else
+            XmlDocumentation.getXmlDocFromAssembly entity.Assembly.FileName entity.XmlDocSig culture token
 
     interface ITypeSymbol with
         member x.AllInterfaces =
@@ -244,8 +247,11 @@ and FSharpMemberOrFunctionOrValueSymbol(mfv:FSharpMemberOrFunctionOrValue) =
 
     override this.GetDocumentationCommentId() = mfv.XmlDocSig
 
-    override this.GetDocumentationCommentXml(_culture, _expand, _token) =
-        String.concat "\n" mfv.XmlDoc
+    override this.GetDocumentationCommentXml(culture, _expand, token) =
+        if mfv.XmlDoc.Count > 0 then
+            String.concat "\n" mfv.XmlDoc
+        else
+            XmlDocumentation.getXmlDocFromAssembly mfv.Assembly.FileName mfv.XmlDocSig culture token
 
 and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
     inherit FSharpMemberOrFunctionOrValueSymbol(method)
