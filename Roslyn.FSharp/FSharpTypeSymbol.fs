@@ -47,7 +47,7 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
     override this.GetDocumentationCommentId() = entity.XmlDocSig
 
     override this.GetDocumentationCommentXml(_culture, _expand, _token) =
-        String.concat "" entity.XmlDoc
+        String.concat "\n" entity.XmlDoc
 
     interface ITypeSymbol with
         member x.AllInterfaces =
@@ -226,26 +226,31 @@ and FSharpParameterSymbol(param: FSharpParameter, ordinal:int) =
         member x.Type =
             FSharpTypeSymbol(param.Type.TypeDefinition) :> _
 
-and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
-    inherit FSharpISymbol(method)
+and FSharpMemberOrFunctionOrValueSymbol(mfv:FSharpMemberOrFunctionOrValue) =
+    inherit FSharpISymbol(mfv)
 
-    member x.FSharpMethod = method
-    override x.Name = method.CompiledName
+    member x.Member = mfv
+    override x.Name = mfv.CompiledName
 
     override x.Equals(other:obj) =
         match other with
-        | :? FSharpMethodSymbol as otherMethod ->
-            method = otherMethod.FSharpMethod
+        | :? FSharpMemberOrFunctionOrValueSymbol as otherMember ->
+            mfv = otherMember.Member
         | _ -> false
 
     override x.CommonEquals other = x.Equals other
 
-    override x.GetHashCode() = method.GetHashCode()
+    override x.GetHashCode() = mfv.GetHashCode()
 
-    override this.GetDocumentationCommentId() = method.XmlDocSig
+    override this.GetDocumentationCommentId() = mfv.XmlDocSig
 
     override this.GetDocumentationCommentXml(_culture, _expand, _token) =
-        String.concat "\n" method.XmlDoc
+        String.concat "\n" mfv.XmlDoc
+
+and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
+    inherit FSharpMemberOrFunctionOrValueSymbol(method)
+
+    override x.Kind = SymbolKind.Method
 
     interface IMethodSymbol with
         member x.Arity = notImplemented()
@@ -391,7 +396,9 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
             |> Seq.toImmutableArray
 
 and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
-    inherit FSharpISymbol(property)
+    inherit FSharpMemberOrFunctionOrValueSymbol(property)
+
+    override this.Name = property.DisplayName
 
     override x.Kind = SymbolKind.Property
 
