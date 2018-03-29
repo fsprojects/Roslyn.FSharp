@@ -44,6 +44,11 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
         |> Option.map namedTypeFromEntity
         |> Option.toObj
 
+    override this.GetDocumentationCommentId() = entity.XmlDocSig
+
+    override this.GetDocumentationCommentXml(_culture, _expand, _token) =
+        String.concat "" entity.XmlDoc
+
     interface ITypeSymbol with
         member x.AllInterfaces =
             entity.AllInterfaces
@@ -236,6 +241,11 @@ and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
     override x.CommonEquals other = x.Equals other
 
     override x.GetHashCode() = method.GetHashCode()
+
+    override this.GetDocumentationCommentId() = method.XmlDocSig
+
+    override this.GetDocumentationCommentXml(_culture, _expand, _token) =
+        String.concat "\n" method.XmlDoc
 
     interface IMethodSymbol with
         member x.Arity = notImplemented()

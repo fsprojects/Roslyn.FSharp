@@ -260,6 +260,28 @@ module ``Compilation tests`` =
         Assert.AreEqual("MyNamespace", args.[1].Value)
 
     [<Test>]
+    let ``Attribute constructor``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            open System
+            type XmlnsDefinitionAttribute(xmlNamespace, clrNamespace) =
+                inherit Attribute()
+
+                new() = XmlnsDefinitionAttribute("default", "default")
+
+            [<XmlnsDefinition("xmlns", "MyNamespace")>]
+            type MyDefinition() = class end
+            """
+            |> getCompilation
+
+        let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
+        let attrs = t.GetAttributes()
+
+        let attr = attrs.First();
+        Assert.AreEqual(2, attr.AttributeConstructor.Parameters.Length)
+
+    [<Test>]
     let ``Attribute named arguments``() =
         let compilation =
             """

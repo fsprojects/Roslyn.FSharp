@@ -103,17 +103,3 @@ type FSharpISymbol (symbol:FSharpSymbol) =
         if accessibility.IsPublic then Accessibility.Public
         elif accessibility.IsInternal then Accessibility.Internal
         else Accessibility.Private
-
-    override this.GetDocumentationCommentId () =
-        match symbol with
-        | :? FSharpEntity as e -> e.XmlDocSig
-        | :? FSharpMemberOrFunctionOrValue as m -> m.XmlDocSig
-        | _ -> invalidArg "symbol"  "Symbol was of a type not containing a documentation comment"
-
-    override this.GetDocumentationCommentXml (_culture, _expand, _token) =
-        let xmlDoc =
-            match symbol with
-            | :? FSharpEntity as e -> e.XmlDoc
-            | :? FSharpMemberOrFunctionOrValue as m -> m.XmlDoc
-            | _ -> invalidArg "symbol"  "Symbol was of a type not containing a documentation comment"
-        String.concat "\n" xmlDoc
