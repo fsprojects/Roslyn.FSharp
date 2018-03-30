@@ -344,8 +344,14 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
         | _ -> FSharpISymbol(m) :> _
 
     let getMembers() =
-        entity.TryGetMembersFunctionsAndValues
-        |> Seq.map memberToISymbol
+        let fields =
+            entity.FSharpFields
+            |> Seq.map(fun f -> FSharpFieldSymbol(f) :> ISymbol)
+
+        let mfvs =
+            entity.TryGetMembersFunctionsAndValues
+            |> Seq.map memberToISymbol
+        fields |> Seq.append mfvs
 
     let getTypeMembers() =
         entity.NestedEntities
@@ -400,6 +406,33 @@ and FSharpNamespaceOrTypeSymbol (entity:FSharpEntity) =
             |> Seq.filter(fun m -> m.Name = name)
             |> Seq.filter(fun m -> m.Arity = arity)
             |> Seq.toImmutableArray
+
+and FSharpFieldSymbol (field:FSharpField) =
+    inherit FSharpSymbolBase()
+
+    override this.Name = field.DisplayName
+
+    override x.Kind = SymbolKind.Field
+
+    interface IFieldSymbol with
+        member x.IsReadOnly = notImplemented()
+        member x.IsVolatile = notImplemented()
+        member x.HasConstantValue =  field.LiteralValue.IsSome
+        member x.Type =
+            field.FieldType
+            |> typeDefinitionSafe
+            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> ITypeSymbol)
+            |> Option.toObj
+        member x.ConstantValue =
+            field.LiteralValue
+            |> Option.toObj
+
+        member x.CustomModifiers = notImplemented()
+
+        member x.AssociatedSymbol = notImplemented()
+        member x.IsConst = notImplemented()
+        member x.OriginalDefinition = x :> IFieldSymbol
+        member x.CorrespondingTupleField = notImplemented()
 
 and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
     inherit FSharpMemberOrFunctionOrValueSymbol(property)
@@ -643,9 +676,7 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
 
         member x.GetMetadata ()= notImplemented()
         member x.GetTypeByMetadataName (fullyQualifiedMetadataName) =
-            let path =
-                fullyQualifiedMetadataName.Split '.'
-                |> List.ofArray
+            let path = pathFromFullyQualifiedMetadataName fullyQualifiedMetadataName
 
             assembly.Contents.FindEntityByPath path
             |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)

@@ -22,6 +22,11 @@ module helpers = //TODO: I suck at naming
             | true -> Some this.AbbreviatedType
             | false -> None
 
+    let pathFromFullyQualifiedMetadataName (fullyQualifiedMetadataName: string) =
+        fullyQualifiedMetadataName.Split '.'
+        |> Array.collect(fun s -> s.Split '+')
+        |> List.ofArray
+
 module Seq =
     let inline toImmutableArray (sequence: 'a seq) =
         sequence.ToImmutableArray()
