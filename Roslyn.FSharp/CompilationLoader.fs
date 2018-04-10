@@ -2,6 +2,7 @@
 
 module CompilationLoader =
     open System
+    open System.IO
     open Microsoft.FSharp.Compiler.SourceCodeServices
 
     let private checker = FSharpChecker.Create()
@@ -9,13 +10,15 @@ module CompilationLoader =
     /// Super simple projectOptions builder for now
     let Load(projectFileName: string, sourceFiles: string seq, references: string seq) =
         async {
+            let outputFile = Path.ChangeExtension(projectFileName, ".dll")
+
             let otherOptions =
                 [| yield "--simpleresolution"
                    yield "--noframework"
                    yield "--debug:full"
                    yield "--define:DEBUG"
                    yield "--optimize-"
-                   yield "--out:" + "test.dll"
+                   yield "--out:" + outputFile
                    yield "--warn:3"
                    yield "--fullpaths"
                    yield "--flaterrors"
@@ -37,5 +40,5 @@ module CompilationLoader =
                   Stamp = None }
 
             let! checkResults = checker.ParseAndCheckProject(projectOptions)
-            return FSharpCompilation(checkResults) :> ICompilation
+            return FSharpCompilation(checkResults, outputFile) :> ICompilation
         } |> Async.StartAsTask

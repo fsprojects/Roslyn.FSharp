@@ -629,23 +629,26 @@ and FSharpNamespaceSymbol (namespaceName: string, entities: FSharpEntity seq, na
         member x.IsNamespace = true
         member x.IsType = false
 
-and FSharpAssemblySymbol (assembly: FSharpAssembly) =
+and FSharpAssemblySymbol (assembly: FSharpAssemblySignature, name) =
     inherit FSharpSymbolBase()
-    override x.Name = assembly.SimpleName 
+
+    new(assembly: FSharpAssembly) =
+        FSharpAssemblySymbol(assembly.Contents, assembly.SimpleName)
+    override x.Name = name
 
     override this.GetAttributes () =
-        assembly.Contents.Attributes
+        assembly.Attributes
         |> Seq.map(fun attr -> FSharpAttributeData(attr) :> AttributeData)
         |> Seq.toImmutableArray
 
-    override this.ToString() = assembly.SimpleName
+    override this.ToString() = name
 
     interface IAssemblySymbol with
         member x.GlobalNamespace =
             let entities =
-                assembly.Contents.Attributes
+                assembly.Attributes
                 |> Seq.map(fun a -> a.AttributeType)
-                |> Seq.append assembly.Contents.Entities
+                |> Seq.append assembly.Entities
             FSharpNamespaceSymbol("global", entities, 0) :> INamespaceSymbol
         member x.Identity =
             //match assembly.FileName with
@@ -656,12 +659,12 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
             //// but I don't know where to get the information needed to construct
             ////AssemblyIdentity(name,version,cultureName,publicKey,hasPublicKey, isRetargetable,contentType)
             //| None ->
-            AssemblyIdentity(assembly.SimpleName)
+            AssemblyIdentity(name)
         member x.IsInteractive = notImplemented()
         member x.MightContainExtensionMethods = true //TODO: no idea
         member x.Modules = notImplemented()
         member x.NamespaceNames =
-            assembly.Contents.Entities
+            assembly.Entities
             |> Seq.choose(fun entity -> entity.Namespace)
             |> Seq.distinct
             |> Seq.collect(fun ns -> ns.Split('.'))
@@ -670,7 +673,7 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
             |> Seq.toCollection
 
         member x.TypeNames =
-            assembly.Contents.Entities
+            assembly.Entities
             |> Seq.map(fun entity -> entity.CompiledName)
             |> Seq.toCollection
 
@@ -678,7 +681,7 @@ and FSharpAssemblySymbol (assembly: FSharpAssembly) =
         member x.GetTypeByMetadataName (fullyQualifiedMetadataName) =
             let path = pathFromFullyQualifiedMetadataName fullyQualifiedMetadataName
 
-            assembly.Contents.FindEntityByPath path
+            assembly.FindEntityByPath path
             |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
             |> Option.toObj
 
