@@ -44,7 +44,7 @@ type CompilationWrapper(compilation: Compilation) =
 
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
+type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFile) =
     let assemblySignature = checkProjectResults.AssemblySignature
 
     interface ICompilation with
@@ -92,10 +92,5 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults) =
             FSharpAssemblySymbol(fsharpAssembly) :> ISymbol
 
         member x.Assembly =
-            //TODO: Is there a better way to get the current FSharpAssembly?
-            assemblySignature.Entities
-            |> Seq.tryHead
-            |> function
-               | Some e -> FSharpAssemblySymbol(e.Assembly) :> _
-               | None -> failwith "Couldn't find any entities"
+            FSharpAssemblySymbol(assemblySignature, outputFile) :> _
 
