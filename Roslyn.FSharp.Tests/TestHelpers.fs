@@ -7,7 +7,8 @@ open Roslyn.FSharp
 [<AutoOpen>]
 module TestHelpers =
     let getCompilation input =
-        let filename = "test.fsx"
+        let filename = Path.GetTempFileName()
+        let filename = Path.ChangeExtension(filename, ".fsx")
         File.WriteAllText(filename, input)
         CompilationLoader.Load("test.fsproj", [filename], [])
         |> Async.AwaitTask
