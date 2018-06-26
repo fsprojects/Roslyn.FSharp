@@ -6,7 +6,7 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFile) =
     let assemblySignature = checkProjectResults.AssemblySignature
 
-    interface ICompilation with
+    interface IRoslynCompilation with
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
             let path =
                 fullyQualifiedMetadataName.Split '.'

@@ -7,7 +7,7 @@ open Microsoft.CodeAnalysis
 /// Instead, we can create a wrapper that implements our interface
 /// that mirrors Compilation methods that we have working for F#
 type CompilationWrapper(compilation: Compilation) =
-    interface ICompilation with
+    interface IRoslynCompilation with
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
             compilation.GetTypeByMetadataName(fullyQualifiedMetadataName)
         member x.References = compilation.References

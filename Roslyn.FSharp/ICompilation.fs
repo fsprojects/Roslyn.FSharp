@@ -2,7 +2,7 @@
 
 open Microsoft.CodeAnalysis
 
-type ICompilation =
+type IRoslynCompilation =
     abstract member GetTypeByMetadataName : fullyQualifiedMetadataName:string -> INamedTypeSymbol
     abstract member References : MetadataReference seq
     abstract member GetAssemblyOrModuleSymbol : MetadataReference -> ISymbol
