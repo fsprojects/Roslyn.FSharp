@@ -256,7 +256,7 @@ module ``C# playground`` =
         let attrs = t.GetAttributes()
 
         let attr = attrs.First();
-        let args = compilation.GetAttributeConstructorArguments attr
+        let args = attr.ConstructorArguments
         Assert.AreEqual("xmlns", args.[0].Value)
         Assert.AreEqual("MyNamespace", args.[1].Value)
 
@@ -284,7 +284,8 @@ module ``C# playground`` =
         let attrs = t.GetAttributes()
 
         let attr = attrs.First();
-        let namedArguments = compilation.GetAttributeNamedArguments attr
+
+        let namedArguments = attr.NamedArguments
         let expectedKeys = ["XmlNamespace"; "ClrNamespace"]
         let expectedValues = ["xmlns"; "MyNamespace"]
 

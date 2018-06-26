@@ -1,15 +1,8 @@
 ﻿namespace Roslyn.FSharp
+
 open Microsoft.CodeAnalysis
-open System.Collections.Generic
-open System.Collections.Immutable
 
 type ICompilation =
-    /// Hopefully temporary method as Microsoft.CodeAnalysis.TypedConstant
-    /// has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
-    abstract member GetAttributeNamedArguments : attributeData:AttributeData -> ImmutableArray<KeyValuePair<string, Roslyn.FSharp.TypedConstant>>
-    /// Hopefully temporary method as Microsoft.CodeAnalysis.TypedConstant
-    /// has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
-    abstract member GetAttributeConstructorArguments : attributeData:AttributeData -> ImmutableArray<Roslyn.FSharp.TypedConstant>
     abstract member GetTypeByMetadataName : fullyQualifiedMetadataName:string -> INamedTypeSymbol
     abstract member References : MetadataReference seq
     abstract member GetAssemblyOrModuleSymbol : MetadataReference -> ISymbol
@@ -21,21 +14,6 @@ type ICompilation =
 /// that mirrors Compilation methods that we have working for F#
 type CompilationWrapper(compilation: Compilation) =
     interface ICompilation with
-        member x.GetAttributeConstructorArguments(attributeData) =
-            attributeData.ConstructorArguments
-            |> Seq.map (fun arg ->
-                Roslyn.FSharp.TypedConstant(arg.Type, arg.Kind, arg.Value))
-            |> Seq.toImmutableArray
-
-        member x.GetAttributeNamedArguments(attributeData) =
-            attributeData.NamedArguments
-            |> Seq.map (fun arg ->
-                let name = arg.Key
-                let constant = arg.Value
-                let newConstant = Roslyn.FSharp.TypedConstant(constant.Type, constant.Kind, constant.Value)
-                KeyValuePair(name, newConstant))
-            |> Seq.toImmutableArray
-
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
             compilation.GetTypeByMetadataName(fullyQualifiedMetadataName)
         member x.References = compilation.References
@@ -48,12 +26,6 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFi
     let assemblySignature = checkProjectResults.AssemblySignature
 
     interface ICompilation with
-        member x.GetAttributeConstructorArguments(attributeData) =
-            (attributeData :?> FSharpAttributeData).ConstructorArguments
-
-        member x.GetAttributeNamedArguments(attributeData) =
-            (attributeData :?> FSharpAttributeData).NamedArguments
-
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
             let path =
                 fullyQualifiedMetadataName.Split '.'

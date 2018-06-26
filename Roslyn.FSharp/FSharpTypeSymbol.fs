@@ -4,6 +4,7 @@ open System
 open System.Collections.Immutable
 open System.Collections.Generic
 open System.Linq
+open System.Reflection
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
@@ -689,21 +690,6 @@ and FSharpAssemblySymbol (assembly: FSharpAssemblySignature, name) =
         member x.ResolveForwardedType (fullyQualifiedMetadataName)= notImplemented()
         member x.Kind = SymbolKind.Assembly
 
-/// Hopefully temporary type because Microsoft.CodeAnalysis.TypedConstant
-/// has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
-and TypedConstant(entity: ITypeSymbol, kind:TypedConstantKind, value:obj) =
-    member x.Type = entity
-    member x.Kind = kind
-    member x.Value = value
-    member x.Values = notImplemented()
-        //if x.Kind = TypedConstantKind.Array then
-        //    let sequence = x.Value :?> seq<TypedConstant>
-        //    sequence |> Seq.toImmutableArray
-        //else
-            //ImmutableArray.Empty
-    override x.ToString() = string value
-
-
 and FSharpAttributeData(attribute: FSharpAttribute) =
     inherit AttributeData()
 
@@ -736,9 +722,25 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
             | _ when entity.IsFSharpModule || entity.IsClass -> TypedConstantKind.Type //TODO: no idea
             | _ -> TypedConstantKind.Error
 
+    let typedConstantCtor =
+        typeof<TypedConstant>.GetConstructors(BindingFlags.Instance ||| BindingFlags.NonPublic)
+        |> Seq.find(fun c -> c.GetParameters().Length = 3)
+
     override x.CommonAttributeClass =
         FSharpNamedTypeSymbol(attribute.AttributeType) :> INamedTypeSymbol
-    override x.CommonConstructorArguments = notImplemented()
+
+    override x.CommonConstructorArguments =
+        attribute.ConstructorArguments
+        |> Seq.choose (fun (ty, obj) ->
+            ty.TypeDefinitionSafe
+            |> Option.map(fun entity ->
+                let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
+                let typeKind = getTypeKind entity
+                let args = [| box typeSymbol; box typeKind; obj |]
+                // Microsoft.CodeAnalysis.TypedConstant has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
+                typedConstantCtor.Invoke(args) :?> TypedConstant))
+        |> Seq.toImmutableArray
+
     override x.CommonAttributeConstructor =
         let constructors =
             attribute.AttributeType.MembersFunctionsAndValues
@@ -757,29 +759,17 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         FSharpMethodSymbol(constructor) :> _
 
     override x.CommonApplicationSyntaxReference = notImplemented()
-    override x.CommonNamedArguments = notImplemented()
-
-    override this.ToString() = this.CommonAttributeClass.Name
-
-    /// substitute method for CommonConstructorArguments that uses our TypedConstant type
-    member x.ConstructorArguments =
-        attribute.ConstructorArguments
-        |> Seq.choose (fun (ty, obj) ->
-            ty.TypeDefinitionSafe
-            |> Option.map(fun entity ->
-                let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
-                let typeKind = getTypeKind entity
-                TypedConstant(typeSymbol, typeKind, obj)))
-        |> Seq.toImmutableArray
-
-    /// substitute method for CommonNamedArguments that uses our TypedConstant type
-    member x.NamedArguments =
+    override x.CommonNamedArguments =
         attribute.NamedArguments
         |> Seq.choose (fun (ty, nm, isField, obj) ->
             ty.TypeDefinitionSafe
             |> Option.map(fun entity ->
                 let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
                 let typeKind = getTypeKind entity
-                let constant = TypedConstant(typeSymbol, typeKind, obj)
+                let args = [| box typeSymbol; box typeKind; obj |]
+                // Microsoft.CodeAnalysis.TypedConstant has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
+                let constant = typedConstantCtor.Invoke(args) :?> TypedConstant
                 KeyValuePair(nm, constant)))
         |> Seq.toImmutableArray
+
+    override this.ToString() = this.CommonAttributeClass.Name
