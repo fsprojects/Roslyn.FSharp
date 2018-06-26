@@ -722,7 +722,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
             | _ when entity.IsFSharpModule || entity.IsClass -> TypedConstantKind.Type //TODO: no idea
             | _ -> TypedConstantKind.Error
 
-    let typedConstantCtor =
+    static let typedConstantCtor =
         typeof<TypedConstant>.GetConstructors(BindingFlags.Instance ||| BindingFlags.NonPublic)
         |> Seq.find(fun c -> c.GetParameters().Length = 3)
 
