@@ -734,7 +734,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         |> Seq.choose (fun (ty, obj) ->
             ty.TypeDefinitionSafe
             |> Option.map(fun entity ->
-                let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
+                let typeSymbol = FSharpNamedTypeSymbol(entity)
                 let typeKind = getTypeKind entity
                 let args = [| box typeSymbol; box typeKind; obj |]
                 // Microsoft.CodeAnalysis.TypedConstant has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
@@ -764,7 +764,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         |> Seq.choose (fun (ty, nm, isField, obj) ->
             ty.TypeDefinitionSafe
             |> Option.map(fun entity ->
-                let typeSymbol = FSharpNamedTypeSymbol(entity) :> ITypeSymbol
+                let typeSymbol = FSharpNamedTypeSymbol(entity)
                 let typeKind = getTypeKind entity
                 let args = [| box typeSymbol; box typeKind; obj |]
                 // Microsoft.CodeAnalysis.TypedConstant has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
