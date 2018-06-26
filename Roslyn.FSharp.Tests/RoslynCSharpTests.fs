@@ -1,5 +1,5 @@
 ﻿namespace Roslyn.FSharp.Tests
-open System
+
 open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp

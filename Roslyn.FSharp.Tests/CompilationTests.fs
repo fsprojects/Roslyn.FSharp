@@ -5,7 +5,6 @@ open Microsoft.CodeAnalysis
 open Roslyn.FSharp
 open NUnit.Framework
 
-open Microsoft.FSharp.Compiler.SourceCodeServices
 module ``Compilation tests`` =
     [<Test>]
     let ``can get type by metadata name``() =
