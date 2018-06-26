@@ -229,7 +229,7 @@ module ``Compilation tests`` =
              "AssemblyTitleAttribute"; "CLSCompliantAttribute";
              "ComCompatibleVersionAttribute"; "ComVisibleAttribute";
              "CompilationRelaxationsAttribute"; "DebuggableAttribute";
-             "DefaultDependencyAttribute"; "GuidAttribute"; "InternalsVisibleToAttribute";
+             "DefaultDependencyAttribute"; "ExtensionAttribute"; "GuidAttribute";
              "InternalsVisibleToAttribute"; "InternalsVisibleToAttribute";
              "InternalsVisibleToAttribute"; "InternalsVisibleToAttribute";
              "NeutralResourcesLanguageAttribute"; "RuntimeCompatibilityAttribute";

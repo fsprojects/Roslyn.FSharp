@@ -225,9 +225,10 @@ module ``C# playground`` =
              "CompilationRelaxationsAttribute"; "DebuggableAttribute";
              "DefaultDependencyAttribute"; "GuidAttribute"; "InternalsVisibleToAttribute";
              "InternalsVisibleToAttribute"; "InternalsVisibleToAttribute";
-             "InternalsVisibleToAttribute"; "InternalsVisibleToAttribute";
-             "NeutralResourcesLanguageAttribute"; "RuntimeCompatibilityAttribute";
-             "SatelliteContractVersionAttribute"; "StringFreezingAttribute"]
+             "InternalsVisibleToAttribute"; "NeutralResourcesLanguageAttribute";
+             "RuntimeCompatibilityAttribute"; "SatelliteContractVersionAttribute";
+             "StringFreezingAttribute"]
+
         CollectionAssert.AreEqual(expected, attrs)
 
     [<Test>]
