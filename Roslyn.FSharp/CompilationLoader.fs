@@ -40,5 +40,5 @@ module CompilationLoader =
                   Stamp = None }
 
             let! checkResults = checker.ParseAndCheckProject(projectOptions)
-            return FSharpCompilation(checkResults, outputFile) :> ICompilation
+            return FSharpCompilation(checkResults, outputFile) :> IRoslynCompilation
         } |> Async.StartAsTask

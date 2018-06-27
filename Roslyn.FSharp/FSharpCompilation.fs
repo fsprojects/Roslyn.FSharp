@@ -3,7 +3,7 @@
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFile) =
+type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFile) as this =
     let assemblySignature = checkProjectResults.AssemblySignature
 
     interface IRoslynCompilation with
@@ -46,3 +46,5 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFi
 
         member x.Assembly =
             FSharpAssemblySymbol(assemblySignature, outputFile) :> _
+
+        member x.GlobalNamespace = (x :> IRoslynCompilation).GlobalNamespace

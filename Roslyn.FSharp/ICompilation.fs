@@ -7,4 +7,5 @@ type IRoslynCompilation =
     abstract member References : MetadataReference seq
     abstract member GetAssemblyOrModuleSymbol : MetadataReference -> ISymbol
     abstract member Assembly : IAssemblySymbol
+    abstract member GlobalNamespace : INamespaceSymbol
 

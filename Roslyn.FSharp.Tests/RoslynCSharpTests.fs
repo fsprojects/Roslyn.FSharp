@@ -19,7 +19,7 @@ module ``C# playground`` =
 
     let getICompilation(source:string) =
         let compilation = getCompilation source
-        CompilationWrapper(compilation) :> ICompilation
+        CompilationWrapper(compilation) :> IRoslynCompilation
 
     [<Test>]
     let ``property get methods``() =

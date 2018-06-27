@@ -13,3 +13,4 @@ type CompilationWrapper(compilation: Compilation) =
         member x.References = compilation.References
         member x.GetAssemblyOrModuleSymbol(reference) = compilation.GetAssemblyOrModuleSymbol(reference)
         member x.Assembly = compilation.Assembly
+        member x.GlobalNamespace = compilation.GlobalNamespace
