@@ -6,6 +6,13 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFile) as this =
     let assemblySignature = checkProjectResults.AssemblySignature
 
+    let selfAndReferences() =
+        seq {
+            yield assemblySignature
+            yield! checkProjectResults.ProjectContext.GetReferencedAssemblies()
+                   |> List.map(fun a -> a.Contents)
+        }
+
     interface IRoslynCompilation with
         member x.GetTypeByMetadataName(fullyQualifiedMetadataName:string) =
             let path =
@@ -13,14 +20,7 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFi
                 |> Array.collect(fun s -> s.Split '+')
                 |> List.ofArray
 
-            let selfAndReferences =
-                seq {
-                    yield assemblySignature
-                    yield! checkProjectResults.ProjectContext.GetReferencedAssemblies()
-                           |> List.map(fun a -> a.Contents)
-                }
-
-            selfAndReferences
+            selfAndReferences()
             |> Seq.tryPick(fun a -> a.FindEntityByPath path)
             |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
             |> Option.toObj
@@ -47,4 +47,9 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFi
         member x.Assembly =
             FSharpAssemblySymbol(assemblySignature, outputFile) :> _
 
-        member x.GlobalNamespace = (x :> IRoslynCompilation).GlobalNamespace
+        member x.GlobalNamespace =
+            let entities =
+                selfAndReferences()
+                |> Seq.collect(fun asm -> asm.Entities)
+
+            FSharpNamespaceSymbol("global", entities, 0) :> INamespaceSymbol

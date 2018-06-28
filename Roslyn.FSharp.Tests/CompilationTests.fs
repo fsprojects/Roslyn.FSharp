@@ -30,7 +30,9 @@ module ``Compilation tests`` =
         let compilation = getCompilation ""
         let list1 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
         let list2 = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
-        Assert.AreEqual (list1, list2)
+        Assert.AreEqual(list1, list2)
+        let res = list1 = list2
+        Assert.IsTrue(res) 
 
     [<Test>]
     let ``NamespaceTypes are equal``() =
