@@ -9,7 +9,7 @@ open Roslyn.FSharp
 /// These aren't really tests. They're just experiments for seeing how Roslyn handles C# so that I can compare with F#
 module ``C# playground`` =
     let getCompilation(source:string) =
-        let tree = CSharpSyntaxTree.ParseText source
+        let tree = CSharpSyntaxTree.ParseText(source, path="test.cs")
         let compilation = 
             CSharpCompilation.Create("HelloWorld")
                 .AddReferences(
@@ -259,6 +259,26 @@ module ``C# playground`` =
         let args = attr.ConstructorArguments
         Assert.AreEqual("xmlns", args.[0].Value)
         Assert.AreEqual("MyNamespace", args.[1].Value)
+
+    [<Test>]
+    let ``Attribute application source file``() =
+        let compilation =
+            """
+            namespace MyNamespace;
+            using System;
+
+            [Obsolete]
+            public class MyDefinition
+            {
+            }
+            """
+            |> getICompilation
+
+        let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
+        let attr = t.GetAttributes().First()
+
+        let fp = attr.ApplicationSyntaxReference.SyntaxTree.FilePath
+        Assert.AreEqual("test.cs", fp)
 
     [<Test>]
     let ``Attribute named arguments``() =

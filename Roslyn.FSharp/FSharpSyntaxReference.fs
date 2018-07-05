@@ -2,11 +2,16 @@
 
 open System
 open Microsoft.CodeAnalysis
+open Microsoft.FSharp.Compiler.SourceCodeServices
 
-type FSharpSyntaxTree() =
+type FSharpSyntaxTree(entity: FSharpEntity) =
     inherit SyntaxTree()
-
-    override x.FilePath = ""
+    override x.FilePath =
+        match entity.ImplementationLocation with
+        | Some range -> range.FileName
+        /// The FilePath can be empty but never null
+        /// https://github.com/dotnet/roslyn/blob/2868849409d44fcd5ecb84bef45575a98018a8c6/src/Compilers/Core/Portable/Syntax/SyntaxTree.cs#L28-L29
+        | None -> ""
     override x.HasCompilationUnitRoot = notImplemented()
     override x.OptionsCore = notImplemented()
     override x.Length = notImplemented()
@@ -33,9 +38,9 @@ type FSharpSyntaxTree() =
     override x.WithRootAndOptions(root: SyntaxNode, options: ParseOptions) = notImplemented()
     override x.WithFilePath(path: string) = notImplemented()
 
-type FSharpSyntaxReference() =
+type FSharpSyntaxReference(entity) =
     inherit SyntaxReference()
 
-    override x.SyntaxTree : SyntaxTree = notImplemented()
+    override x.SyntaxTree = FSharpSyntaxTree(entity) :> SyntaxTree
     override x.Span = notImplemented()
     override x.GetSyntax(cancellationToken) = notImplemented()

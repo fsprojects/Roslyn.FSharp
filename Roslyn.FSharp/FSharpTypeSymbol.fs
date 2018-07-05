@@ -37,7 +37,7 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
 
     override this.GetAttributes () =
         entity.Attributes
-        |> Seq.map(fun a -> FSharpAttributeData(a) :> AttributeData)
+        |> Seq.map(fun a -> FSharpEntityAttributeData(a, entity) :> AttributeData)
         |> Seq.toImmutableArray
 
     override x.Equals (other:obj) =
@@ -781,6 +781,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         FSharpMethodSymbol(constructor) :> _
 
     override x.CommonApplicationSyntaxReference = notImplemented()
+
     override x.CommonNamedArguments =
         attribute.NamedArguments
         |> Seq.choose (fun (ty, nm, isField, obj) ->
@@ -794,3 +795,8 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
                 KeyValuePair(nm, constant)))
         |> Seq.toImmutableArray
 
+and FSharpEntityAttributeData(attribute: FSharpAttribute, entity: FSharpEntity) =
+    inherit FSharpAttributeData(attribute)
+
+    override x.CommonApplicationSyntaxReference =
+        FSharpSyntaxReference(entity) :> SyntaxReference

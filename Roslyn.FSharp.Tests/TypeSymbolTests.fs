@@ -205,3 +205,21 @@ module ``Type symbol tests`` =
         let fqn = "namespace1.namespace2.myModule+MyGenericClass`2"
         let namedType = compilation.Assembly.GetTypeByMetadataName fqn
         Assert.AreEqual(fqn, namedType.GetFullMetadataName())
+
+    [<Test>]
+    let ``Attribute application source file``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            open System
+
+            [<Obsolete>]
+            type MyDefinition() = class end
+            """
+            |> getCompilation
+
+        let t = compilation.GetTypeByMetadataName("MyNamespace.MyDefinition") 
+        let attr = t.GetAttributes().First()
+
+        let fp = attr.ApplicationSyntaxReference.SyntaxTree.FilePath
+        Assert.That(fp, Does.EndWith(".fsx"))
