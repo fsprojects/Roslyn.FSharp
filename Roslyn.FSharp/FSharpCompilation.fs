@@ -22,7 +22,7 @@ type FSharpCompilation (checkProjectResults: FSharpCheckProjectResults, outputFi
 
             selfAndReferences()
             |> Seq.tryPick(fun a -> a.FindEntityByPath path)
-            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
+            |> Option.map(fun e -> (EntityLookup.getOrCreate e) :> INamedTypeSymbol)
             |> Option.toObj
 
         member x.References =

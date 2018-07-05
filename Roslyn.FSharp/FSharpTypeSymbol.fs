@@ -5,19 +5,30 @@ open System.Collections.Immutable
 open System.Collections.Generic
 open System.Linq
 open System.Reflection
+open System.Runtime.CompilerServices
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
+
+module EntityLookup =
+    let lookup = ConditionalWeakTable<FSharpEntity, FSharpNamedTypeSymbol>()
+    let getOrCreate (entity:FSharpEntity) =
+        match lookup.TryGetValue (entity) with
+        | true, symbol -> symbol
+        | false, _ ->
+            let symbol = FSharpNamedTypeSymbol(entity)
+            lookup.Add(entity, symbol)
+            symbol
 
 [<AutoOpen>]
 module TypeHelpers =
     let namedTypeFromEntity (entity:FSharpEntity) =
-        FSharpNamedTypeSymbol(entity) :> INamedTypeSymbol
+        EntityLookup.getOrCreate entity :> INamedTypeSymbol
 
     let namespaceOrTypeSymbol (entity:FSharpEntity) =
         if entity.IsNamespace then
             FSharpEntityNamespaceSymbol(entity) :> INamespaceOrTypeSymbol
         else
-            FSharpNamedTypeSymbol(entity) :> INamespaceOrTypeSymbol
+            EntityLookup.getOrCreate entity :> INamespaceOrTypeSymbol
 
 type FSharpTypeSymbol (entity:FSharpEntity) =
     inherit FSharpNamespaceOrTypeSymbol(entity)
@@ -38,6 +49,9 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
     override x.GetHashCode() = entity.GetHashCode()
 
     override x.CommonEquals(other) = x.Equals(other)
+
+    static member op_Equality(left:FSharpTypeSymbol, right:FSharpTypeSymbol) =
+        left.Equals(right)
 
     override this.ContainingType =
         entity.DeclaringEntity
@@ -61,7 +75,15 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
             |> Seq.toImmutableArray
 
         member x.BaseType =
-            entity.BaseType
+            let baseType =
+                try
+                    entity.BaseType
+                with 
+                // entity.BaseType can throw if we don't reference the
+                // assembly that the base type comes from
+                | _ex -> None
+
+            baseType
             |> Option.bind typeDefinitionSafe
             |> Option.map namedTypeFromEntity
             |> Option.toObj
@@ -316,7 +338,7 @@ and FSharpMethodSymbol (method:FSharpMemberOrFunctionOrValue) =
         member x.ReturnType =
             method.ReturnParameter.Type
             |> typeDefinitionSafe
-            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> ITypeSymbol)
+            |> Option.map(fun e -> namedTypeFromEntity(e) :> ITypeSymbol)
             |> Option.toObj
 
         member x.ReturnTypeCustomModifiers = notImplemented()
@@ -422,7 +444,7 @@ and FSharpFieldSymbol (field:FSharpField) =
         member x.Type =
             field.FieldType
             |> typeDefinitionSafe
-            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> ITypeSymbol)
+            |> Option.map(fun e -> namedTypeFromEntity(e) :> ITypeSymbol)
             |> Option.toObj
         member x.ConstantValue =
             field.LiteralValue
@@ -482,7 +504,7 @@ and FSharpPropertySymbol (property:FSharpMemberOrFunctionOrValue) =
         member x.Type =
             property.ReturnParameter.Type
             |> typeDefinitionSafe
-            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> ITypeSymbol)
+            |> Option.map(fun e -> namedTypeFromEntity(e) :> ITypeSymbol)
             |> Option.toObj
 
         member x.TypeCustomModifiers = notImplemented()
@@ -683,7 +705,7 @@ and FSharpAssemblySymbol (assembly: FSharpAssemblySignature, name) =
             let path = pathFromFullyQualifiedMetadataName fullyQualifiedMetadataName
 
             assembly.FindEntityByPath path
-            |> Option.map(fun e -> FSharpNamedTypeSymbol(e) :> INamedTypeSymbol)
+            |> Option.map namedTypeFromEntity
             |> Option.toObj
 
         member x.GivesAccessTo (toAssembly)= notImplemented()
@@ -734,7 +756,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         |> Seq.choose (fun (ty, obj) ->
             ty.TypeDefinitionSafe
             |> Option.map(fun entity ->
-                let typeSymbol = FSharpNamedTypeSymbol(entity)
+                let typeSymbol = namedTypeFromEntity(entity)
                 let typeKind = getTypeKind entity
                 let args = [| box typeSymbol; box typeKind; obj |]
                 // Microsoft.CodeAnalysis.TypedConstant has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
@@ -764,7 +786,7 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
         |> Seq.choose (fun (ty, nm, isField, obj) ->
             ty.TypeDefinitionSafe
             |> Option.map(fun entity ->
-                let typeSymbol = FSharpNamedTypeSymbol(entity)
+                let typeSymbol = namedTypeFromEntity entity
                 let typeKind = getTypeKind entity
                 let args = [| box typeSymbol; box typeKind; obj |]
                 // Microsoft.CodeAnalysis.TypedConstant has internal constructors - see https://github.com/dotnet/roslyn/issues/25669
@@ -772,4 +794,3 @@ and FSharpAttributeData(attribute: FSharpAttribute) =
                 KeyValuePair(nm, constant)))
         |> Seq.toImmutableArray
 
-    override this.ToString() = this.CommonAttributeClass.Name
