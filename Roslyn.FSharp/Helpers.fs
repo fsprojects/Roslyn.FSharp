@@ -31,9 +31,9 @@ module helpers = //TODO: I suck at naming
 
     let rangeToLocation (range:Range.range) =
         match range.FileName with
-        | "unknown" ->
+        | "unknown" | "startup" ->
             Location.None
-        | _ ->
+        | f when Shim.FileSystem.SafeExists f ->
             use stream = Shim.FileSystem.FileStreamReadShim(range.FileName)
             let text = SourceText.From(stream)
             let startPosition = new LinePosition(range.StartLine, range.StartColumn)
@@ -41,6 +41,8 @@ module helpers = //TODO: I suck at naming
             let linePositionSpan = new LinePositionSpan(startPosition, endPosition)
             let tree = FSharpSyntaxTree(text, range.FileName)
             Location.Create(tree, text.Lines.GetTextSpan(linePositionSpan))
+        | _ ->
+            Location.None
 
 module Seq =
     let inline toImmutableArray (sequence: 'a seq) =
