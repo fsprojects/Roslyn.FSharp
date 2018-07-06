@@ -2,12 +2,14 @@
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Text
+open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.SourceCodeServices
+open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 
 [<AutoOpen>]
 module helpers = //TODO: I suck at naming
-    let notImplemented() = raise (new NotImplementedException())
-
     type FSharpType with
         member this.TypeDefinitionSafe =
             match this.HasTypeDefinition with
@@ -26,6 +28,19 @@ module helpers = //TODO: I suck at naming
         fullyQualifiedMetadataName.Split '.'
         |> Array.collect(fun s -> s.Split '+')
         |> List.ofArray
+
+    let rangeToLocation (range:Range.range) =
+        match range.FileName with
+        | "unknown" ->
+            Location.None
+        | _ ->
+            use stream = Shim.FileSystem.FileStreamReadShim(range.FileName)
+            let text = SourceText.From(stream)
+            let startPosition = new LinePosition(range.StartLine, range.StartColumn)
+            let endPosition = new LinePosition(range.EndLine, range.EndColumn)
+            let linePositionSpan = new LinePositionSpan(startPosition, endPosition)
+            let tree = FSharpSyntaxTree(text, range.FileName)
+            Location.Create(tree, text.Lines.GetTextSpan(linePositionSpan))
 
 module Seq =
     let inline toImmutableArray (sequence: 'a seq) =

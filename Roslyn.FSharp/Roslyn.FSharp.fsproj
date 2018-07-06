@@ -171,9 +171,9 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <None Include="packages.config" />
+    <Compile Include="FSharpSyntaxReference.fs" />
     <Compile Include="Helpers.fs" />
     <Compile Include="XmlDocumentation.fs" />
-    <Compile Include="FSharpSyntaxReference.fs" />
     <Compile Include="FSharpSymbol.fs" />
     <Compile Include="FSharpTypeSymbol.fs" />
     <Compile Include="ICompilation.fs" />

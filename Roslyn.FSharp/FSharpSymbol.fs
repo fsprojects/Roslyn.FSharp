@@ -48,8 +48,12 @@ type FSharpSymbolBase () as this =
 
     abstract member ToDisplayString : SymbolDisplayFormat -> string
     default this.ToDisplayString(_format) = this.Name
+
     abstract member ContainingType : INamedTypeSymbol
     default this.ContainingType = notImplemented()
+
+    abstract member Locations: ImmutableArray<Location>
+    default this.Locations = ImmutableArray.Empty
 
     interface ISymbol with
         member x.Kind = this.Kind
@@ -70,7 +74,7 @@ type FSharpSymbolBase () as this =
         member x.IsExtern = false //TODO
         member x.IsImplicitlyDeclared = false //TODO
         member x.CanBeReferencedByName = true //TODO
-        member x.Locations = ImmutableArray.Empty //TODO
+        member x.Locations = this.Locations
         member x.DeclaringSyntaxReferences = ImmutableArray.Empty //TODO
         member x.GetAttributes () = this.GetAttributes()
         member x.DeclaredAccessibility = this.DeclaredAccessibility

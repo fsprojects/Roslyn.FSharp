@@ -67,6 +67,17 @@ type FSharpTypeSymbol (entity:FSharpEntity) =
         else
             XmlDocumentation.getXmlDocFromAssembly entity.Assembly.FileName entity.XmlDocSig culture token
 
+    override x.Locations =
+        seq {
+            yield rangeToLocation entity.DeclarationLocation    
+            // TODO: Code is commented out below because rangeToLocation
+            // is super slow due to file read
+            //if entity.ImplementationLocation.IsSome then
+            //    yield rangeToSourceLocation entity.ImplementationLocation.Value
+            //if entity.SourceLocation.IsSome then
+                //yield rangeToSourceLocation entity.SourceLocation.Value
+        } |> Seq.toImmutableArray
+
     interface ITypeSymbol with
         member x.AllInterfaces =
             entity.AllInterfaces

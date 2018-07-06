@@ -119,6 +119,32 @@ module ``Type symbol tests`` =
         Assert.AreEqual("int", property.Type.Name)
 
     [<Test>]
+    let ``type is in source code``() =
+        let compilation =
+            """
+            namespace MyNamespace
+            type MyType() = class end
+            """
+            |> getCompilation
+
+        let location =
+            compilation.GetTypeByMetadataName("MyNamespace.MyType").Locations
+            |> Seq.head
+
+        Assert.True(location.IsInSource)
+        Assert.That(location.SourceTree.FilePath, Does.EndWith ".fsx")
+
+    [<Test>]
+    let ``type is not in source code``() =
+        let compilation = getCompilation ""
+        let list = compilation.GetTypeByMetadataName("System.Collections.Generic.List`1")
+        let location =
+            list.Locations
+            |> Seq.head
+
+        Assert.False(location.IsInSource)
+
+    [<Test>]
     let ``can get nested type indirectly``() =
         let compilation =
             """
